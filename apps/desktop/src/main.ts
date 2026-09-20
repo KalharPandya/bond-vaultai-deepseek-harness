@@ -157,6 +157,10 @@ function createWindow(preload: string, show = false, primary = false): BrowserWi
       contextIsolation: true,
       sandbox: true,
       webSecurity: true,
+      // Chromium's spellchecker downloads a Hunspell dictionary from a Google
+      // host the first time a text field is focused, which is every composer
+      // use. This build makes no request the user did not ask for.
+      spellcheck: false,
     },
   })
   window.webContents.setWindowOpenHandler(({ url }) => {
