@@ -1,8 +1,11 @@
 /** Environment variable that selects the Desktop update deployment. */
 export const DESKTOP_AUTO_UPDATE_ENV: 'DSH_DESKTOP_AUTO_UPDATE_ENV'
 
+/** Environment variable carrying a complete self-hosted updater base URL, path included. */
+export const SELFHOSTED_UPDATE_URL_ENV: 'DSH_DESKTOP_SELFHOSTED_UPDATE_URL'
+
 /** Supported Desktop update deployment. */
-export type DesktopAutoUpdateEnvironment = 'test' | 'production'
+export type DesktopAutoUpdateEnvironment = 'test' | 'production' | 'selfhosted' | 'none'
 
 /** Directory name of one supported Desktop release target. */
 export type DesktopAutoUpdateTarget = 'mac-arm64' | 'mac-x64' | 'win-x64'
@@ -16,8 +19,12 @@ export interface DesktopAutoUpdateConfig {
   readonly keyPrefix: string
 }
 
+/** Deployment whose feed is published to a COS bucket. */
+export type DesktopUploadEnvironment = 'test' | 'production'
+
 /** Public updater URL and private COS destination for one upload target. */
-export interface DesktopUploadConfig extends DesktopAutoUpdateConfig {
+export interface DesktopUploadConfig extends Omit<DesktopAutoUpdateConfig, 'environment'> {
+  readonly environment: DesktopUploadEnvironment
   readonly bucket: string
   readonly secretIdEnvName: string
   readonly secretKeyEnvName: string
@@ -66,14 +73,14 @@ export function desktopUpdateMetadataFilename(
  * @param env - Packaging or upload environment.
  * @param platform - Target Node.js platform.
  * @param arch - Target Node.js architecture.
- * @returns Resolved updater configuration.
+ * @returns Resolved updater configuration, or undefined when the deployment publishes no feed.
  * @throws When the test deployment lacks a valid HTTPS origin.
  */
 export function resolveDesktopAutoUpdateConfig(
   env: NodeJS.ProcessEnv,
   platform: NodeJS.Platform,
   arch: string,
-): DesktopAutoUpdateConfig
+): DesktopAutoUpdateConfig | undefined
 
 /**
  * Resolve the public updater URL and private COS destination for one upload target.

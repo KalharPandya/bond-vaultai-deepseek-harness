@@ -76,6 +76,9 @@ export async function packageMacOSArtifacts(
   const expected = resolveMacOSSigningEnvironment(environment)
   const credentials = resolveMacOSNotarizationEnvironment(environment)
   const update = resolveDesktopAutoUpdateConfig(environment, 'darwin', arch)
+  if (update === undefined) {
+    throw new Error('desktop macOS packaging: requires an updater deployment that publishes a feed')
+  }
   const appPath = join(artifactsRoot, arch === 'arm64' ? 'mac-arm64' : 'mac', 'DeepSeek Harness.app')
   const root = await mkdtemp(join(dirname(artifactsRoot), 'notarization-'))
   const zipApp = join(root, 'zip', basename(appPath))

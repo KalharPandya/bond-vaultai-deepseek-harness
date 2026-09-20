@@ -15,7 +15,7 @@ import {
   resolveWindowsUpdatePublisher,
   scrubWindowsSigningEnvironment,
 } from './windows-sign.mjs'
-import { resolveDesktopAutoUpdateConfig } from './desktop-auto-update-environment.mjs'
+import { resolveDesktopAutoUpdateConfig, resolveDesktopAutoUpdateEnvironment } from './desktop-auto-update-environment.mjs'
 import { resolveDesktopPolicyEnvironment } from './desktop-policy-environment.mjs'
 import { desktopTargetBuildPaths, resolveDesktopBuildTarget } from './desktop-build-paths.mjs'
 import { installWindowsDirectoryInstaller } from './windows-directory-installer.mjs'
@@ -73,7 +73,12 @@ export function createElectronBuilderConfig(
   if (windowsSigner !== undefined) {
     installWindowsNsisBootstrapSigner({ sign: windowsSigner })
   }
-  const update = unsigned ? undefined : resolveDesktopAutoUpdateConfig(env, resolvedPlatform, resolvedArch)
+  // Signing gates the COS-backed deployments, whose feeds carry artifacts signed by the
+  // release certificate. A self-hosted feed serves whatever this build produces, so it stays
+  // available to unsigned builds and is the only way an unsigned build can update itself.
+  const update = unsigned && resolveDesktopAutoUpdateEnvironment(env) !== 'selfhosted'
+    ? undefined
+    : resolveDesktopAutoUpdateConfig(env, resolvedPlatform, resolvedArch)
   if (preparedRuntime !== undefined) buildPaths.dsh = preparedRuntime
   return {
     appId,
@@ -196,7 +201,10 @@ export function createElectronBuilderConfig(
       allowElevation: false,
       allowToChangeInstallationDirectory: false,
       installerLanguages: ['en_US', 'zh_CN'],
-      differentialPackage: true,
+      // Differential download reads the installed version's blockmap from the same feed
+      // directory. A self-hosted feed publishing only the current release cannot serve it,
+      // so those builds transfer the complete installer instead of failing the lookup.
+      differentialPackage: update?.environment !== 'selfhosted',
     },
     detectUpdateChannel: false,
     publish: update === undefined ? null : [{ provider: 'generic', url: update.publicUrl, channel: 'nightly' }],

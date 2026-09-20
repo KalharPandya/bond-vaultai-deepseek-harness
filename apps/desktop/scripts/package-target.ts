@@ -134,8 +134,9 @@ function writeReleaseRecord(
     schemaVersion: 1,
     target: target.name,
     version: dshVersion,
-    environment: update.environment,
-    publicUrl: update.publicUrl,
+    // A deployment that publishes no feed has no updater destination to record,
+    // and nothing to upload; the upload plan rejects such a record on sight.
+    ...(update === undefined ? {} : { environment: update.environment, publicUrl: update.publicUrl }),
   }, null, 2)}\n`)
   renameSync(temporaryPath, recordPath)
 }

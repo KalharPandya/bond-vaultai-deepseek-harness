@@ -22,6 +22,9 @@ const UPDATE_ENVIRONMENTS = {
   },
 }
 
+/** Environment variable carrying a complete self-hosted updater base URL, path included. */
+export const SELFHOSTED_UPDATE_URL_ENV = 'DSH_DESKTOP_SELFHOSTED_UPDATE_URL'
+
 const UPDATE_TARGETS = new Set(['mac-arm64', 'mac-x64', 'win-x64'])
 
 /**
@@ -31,8 +34,8 @@ const UPDATE_TARGETS = new Set(['mac-arm64', 'mac-x64', 'win-x64'])
  */
 export function resolveDesktopAutoUpdateEnvironment(env) {
   const value = env[DESKTOP_AUTO_UPDATE_ENV]?.trim() || 'test'
-  if (value !== 'test' && value !== 'production') {
-    throw new Error(`desktop auto-update: ${DESKTOP_AUTO_UPDATE_ENV} must be "test" or "production"`)
+  if (!['test', 'production', 'selfhosted', 'none'].includes(value)) {
+    throw new Error(`desktop auto-update: ${DESKTOP_AUTO_UPDATE_ENV} must be "test", "production", "selfhosted", or "none"`)
   }
   return value
 }
@@ -120,6 +123,30 @@ function httpsOrigin(value, name) {
 }
 
 /**
+ * Normalize a self-hosted updater base URL, which unlike a deployment origin may carry a path.
+ * @param {string} value - Candidate base URL.
+ * @param {string} name - Environment variable used in diagnostics.
+ * @returns {string} Normalized HTTPS base URL with a trailing slash.
+ */
+function httpsBaseUrl(value, name) {
+  let parsed
+  try {
+    parsed = new URL(value)
+  }
+  catch {
+    throw new Error(`desktop auto-update: ${name} must be an absolute HTTPS URL`)
+  }
+  if (parsed.protocol !== 'https:'
+    || parsed.username !== ''
+    || parsed.password !== ''
+    || parsed.search !== ''
+    || parsed.hash !== '') {
+    throw new Error(`desktop auto-update: ${name} must be an absolute HTTPS URL without credentials, query, or fragment`)
+  }
+  return parsed.href.endsWith('/') ? parsed.href : `${parsed.href}/`
+}
+
+/**
  * Resolve the public updater URL for one release target.
  * @param {NodeJS.ProcessEnv} env - Packaging or upload environment.
  * @param {NodeJS.Platform} platform - Target Node.js platform.
@@ -130,6 +157,12 @@ function httpsOrigin(value, name) {
 export function resolveDesktopAutoUpdateConfig(env, platform, arch) {
   const environment = resolveDesktopAutoUpdateEnvironment(env)
   const target = resolveDesktopAutoUpdateTarget(platform, arch)
+  // A build with no feed ships no app-update.yml, so the application's updater stays dormant.
+  if (environment === 'none') return undefined
+  if (environment === 'selfhosted') {
+    const publicUrl = httpsBaseUrl(requiredEnvironmentValue(env, SELFHOSTED_UPDATE_URL_ENV), SELFHOSTED_UPDATE_URL_ENV)
+    return { environment, target, origin: new URL(publicUrl).origin, keyPrefix: '', publicUrl }
+  }
   const deployment = UPDATE_ENVIRONMENTS[environment]
   let origin = deployment.fixedOrigin
   if (origin === undefined) {
@@ -157,6 +190,9 @@ export function resolveDesktopAutoUpdateConfig(env, platform, arch) {
  */
 export function resolveDesktopUploadConfig(env, platform, arch) {
   const update = resolveDesktopAutoUpdateConfig(env, platform, arch)
+  if (update === undefined || UPDATE_ENVIRONMENTS[update.environment] === undefined) {
+    throw new Error(`desktop auto-update: ${DESKTOP_AUTO_UPDATE_ENV} must be "test" or "production" to upload`)
+  }
   const deployment = UPDATE_ENVIRONMENTS[update.environment]
   return {
     ...update,

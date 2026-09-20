@@ -1,5 +1,21 @@
-/** Resolve the required policy service from the same deployment as updater publication. */
+/** Resolve the policy service from the same deployment as updater publication. */
 import { resolveDesktopAutoUpdateEnvironment } from './desktop-auto-update-environment.mjs'
+
+/** Environment variable that selects whether this build queries a mandatory-update policy service. */
+export const DESKTOP_MANDATORY_UPDATE_MODE_ENV = 'DSH_DESKTOP_MANDATORY_UPDATE_MODE'
+
+/**
+ * Resolve whether this build carries a policy service, defaulting to the deployment-owned service.
+ * @param {NodeJS.ProcessEnv} environment Packaging environment.
+ * @returns {'enabled' | 'disabled'} Validated policy mode.
+ */
+function resolveMandatoryUpdateMode(environment) {
+  const value = environment[DESKTOP_MANDATORY_UPDATE_MODE_ENV]?.trim() || 'enabled'
+  if (value !== 'enabled' && value !== 'disabled') {
+    throw new Error(`desktop package: ${DESKTOP_MANDATORY_UPDATE_MODE_ENV} must be "enabled" or "disabled"`)
+  }
+  return value
+}
 
 function origin(value, name) {
   let url
@@ -13,9 +29,12 @@ function origin(value, name) {
 /**
  * Resolve mandatory policy metadata before preparing artifacts or accessing signing hardware.
  * @param {NodeJS.ProcessEnv} environment File-owned release settings; the unselected origin is not required.
- * @returns {{ origin: string, allowedPageOrigins: string[], authentication: 'anonymous' | 'feishu-test', [key: string]: unknown }} Selected policy.
+ * @returns {{ origin: string, allowedPageOrigins: string[], authentication: 'anonymous' | 'feishu-test', [key: string]: unknown } | undefined} Selected policy, or undefined when the build carries no policy service.
  */
 export function resolveDesktopPolicyEnvironment(environment) {
+  // A build without a policy service ships no policy metadata, so the application
+  // resolves an absent configuration and never queries or blocks on a remote service.
+  if (resolveMandatoryUpdateMode(environment) === 'disabled') return undefined
   const deployment = resolveDesktopAutoUpdateEnvironment(environment)
   const name = deployment === 'test' ? 'DSH_DESKTOP_MANDATORY_UPDATE_TEST_ORIGIN' : 'DSH_DESKTOP_MANDATORY_UPDATE_PROD_ORIGIN'
   const selected = origin(environment[name], name)

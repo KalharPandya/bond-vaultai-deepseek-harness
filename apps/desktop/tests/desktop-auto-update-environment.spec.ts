@@ -53,7 +53,7 @@ describe('desktop auto-update environment', () => {
       .toThrow(/DOWNLOAD_TEST_ORIGIN/u)
     expect(resolveDesktopAutoUpdateConfig({
       DOWNLOAD_TEST_ORIGIN: 'https://desktop-updates.example.com',
-    }, 'darwin', 'arm64').publicUrl).toContain('/mac-arm64/')
+    }, 'darwin', 'arm64')?.publicUrl).toContain('/mac-arm64/')
     expect(() => resolveDesktopUploadConfig({
       DOWNLOAD_TEST_ORIGIN: 'https://desktop-updates.example.com',
     }, 'darwin', 'arm64')).toThrow(/DOWNLOAD_TEST_COS_BUCKET/u)
@@ -86,4 +86,45 @@ describe('desktop auto-update environment', () => {
     expect(() => desktopUpdateMetadataFilename('not-semver', 'darwin')).toThrow(/invalid Desktop version/u)
     expect(() => desktopUpdateMetadataFilename('1.2.3', 'linux')).toThrow(/unsupported metadata platform/u)
   })
+})
+
+it('publishes no feed for the none deployment', () => {
+  expect(resolveDesktopAutoUpdateConfig({ DSH_DESKTOP_AUTO_UPDATE_ENV: 'none' }, 'win32', 'x64')).toBeUndefined()
+})
+
+it('serves a self-hosted feed from a complete base URL, path included', () => {
+  const update = resolveDesktopAutoUpdateConfig({
+    DSH_DESKTOP_AUTO_UPDATE_ENV: 'selfhosted',
+    DSH_DESKTOP_SELFHOSTED_UPDATE_URL: 'https://updates.example.com/harness/win-x64',
+  }, 'win32', 'x64')
+  expect(update).toEqual({
+    environment: 'selfhosted',
+    target: 'win-x64',
+    origin: 'https://updates.example.com',
+    keyPrefix: '',
+    publicUrl: 'https://updates.example.com/harness/win-x64/',
+  })
+})
+
+it('rejects a self-hosted deployment without a usable HTTPS base URL', () => {
+  expect(() => resolveDesktopAutoUpdateConfig({ DSH_DESKTOP_AUTO_UPDATE_ENV: 'selfhosted' }, 'win32', 'x64'))
+    .toThrow(/DSH_DESKTOP_SELFHOSTED_UPDATE_URL/u)
+  expect(() => resolveDesktopAutoUpdateConfig({
+    DSH_DESKTOP_AUTO_UPDATE_ENV: 'selfhosted',
+    DSH_DESKTOP_SELFHOSTED_UPDATE_URL: 'http://updates.example.com/harness',
+  }, 'win32', 'x64')).toThrow(/absolute HTTPS URL/u)
+})
+
+it('rejects an unsupported deployment name', () => {
+  expect(() => resolveDesktopAutoUpdateConfig({ DSH_DESKTOP_AUTO_UPDATE_ENV: 'staging' }, 'win32', 'x64'))
+    .toThrow(/DSH_DESKTOP_AUTO_UPDATE_ENV/u)
+})
+
+it('uploads only from the COS-backed deployments', () => {
+  for (const environment of ['none', 'selfhosted']) {
+    expect(() => resolveDesktopUploadConfig({
+      DSH_DESKTOP_AUTO_UPDATE_ENV: environment,
+      DSH_DESKTOP_SELFHOSTED_UPDATE_URL: 'https://updates.example.com/harness',
+    }, 'win32', 'x64')).toThrow(/to upload/u)
+  }
 })
