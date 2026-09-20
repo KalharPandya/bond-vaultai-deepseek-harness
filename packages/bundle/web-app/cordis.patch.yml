@@ -47,8 +47,11 @@
     - id: subagent-model-selection-settings
       name: '@deepseek-ai/dsh-tool-subagent/model-selection-settings'
 
+    # Disabled in this build: the feedback Remotes exist only to hand a session
+    # prefix to outbound telemetry, which this build does not ship.
     - id: message-feedback
       name: '@deepseek-ai/dsh-message-feedback'
+      disabled: true
       config:
         maxNoteBytes: 8192
 
@@ -344,8 +347,10 @@
     # The feedback surface: Like/Dislike in the assistant-message action
     # strip, the feedback dialog behind Dislike and /feedback with its
     # acknowledgement toast, over the messageFeedback and sessionFeedback Remotes.
+    # Disabled in this build, which mounts neither Remote.
     - id: ui-message-feedback
       name: '@deepseek-ai/dsh-client-ui-message-feedback'
+      disabled: true
 
     # Model selection: the /model popupSelect + composer seat over session.models.
     - id: ui-model-selection
@@ -491,6 +496,12 @@
 # without regard to `disabled`, so this row must stay to keep `tool-ralph` off
 # the host plane and out of collision with every preset's row.
 - id: tool-ralph
+  disabled: true
+
+# The `/feedback` command submits a session for upload. This build ships no
+# outbound reporting, so the command is withdrawn rather than left to collect
+# input that goes nowhere.
+- id: command-feedback
   disabled: true
 
 - id: agent-instructions
