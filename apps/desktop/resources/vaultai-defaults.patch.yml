@@ -31,12 +31,12 @@
         baseURL: https://bond.vaultai.ca/v1
         apiKeyEnv: VAULTAI_API_KEY
         models:
-          - id: qwen/qwen3.6-35b-a3b
-            name: Qwen3.6 35B A3B
+          - id: openai/gpt-oss-20b
+            name: GPT-OSS 20B
 
 # The transport-independent default for agents created by entry points. The
 # shared base names the official DeepSeek route here; this build names VaultAI.
 - id: agent-default-model
   config:
     provider: vaultai
-    model: qwen/qwen3.6-35b-a3b
+    model: openai/gpt-oss-20b
