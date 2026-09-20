@@ -40,6 +40,14 @@ import { DesktopPolicyTestAuth } from './policy-test-auth.ts'
 import { DesktopUpdateDialog, type UpdateDialogOptions } from './update-dialog.ts'
 import { readDesktopRuntime } from './runtime-tree.ts'
 
+// This build ships no outbound session reporting. The Host inherits this process
+// environment, and its profile boot turns any non-empty value into a hard
+// `disabled` patch on the `session-telemetry-otel` row, so no OTel provider,
+// processor, or exporter is ever constructed. Setting it here rather than in the
+// composition keeps the opt-out ahead of every Host launch, including recovery
+// restarts, and leaves the shared bundle patches untouched.
+process.env.DSH_TELEMETRY_DISABLED = '1'
+
 let focusPrimaryWindow = (): void => {}
 let stopForRecovery = async (): Promise<void> => {}
 let shuttingDown = false
