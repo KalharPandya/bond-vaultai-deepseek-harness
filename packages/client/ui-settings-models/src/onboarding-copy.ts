@@ -9,3 +9,12 @@ export const WELCOME_NOTICE_ACK_FIELD = 'welcomeNoticeVersion'
  * again. The acknowledgement is compared for exact equality.
  */
 export const WELCOME_NOTICE_VERSION = '2026-08-13.1'
+
+/**
+ * Whether this build shows the product welcome notice at all. The notice is
+ * DeepSeek's internal-testing announcement, which a deployment shipping its own
+ * gateway has no reason to present. Turning it off here rather than unregistering
+ * the slot keeps the notice, its store, and its tests wired, so upstream changes
+ * to any of them still apply cleanly.
+ */
+export const WELCOME_NOTICE_ENABLED = false

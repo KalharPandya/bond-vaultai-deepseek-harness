@@ -9,6 +9,14 @@ import {
   WELCOME_NOTICE_ACK_FIELD, WELCOME_NOTICE_SETTINGS_NAMESPACE, WELCOME_NOTICE_VERSION,
 } from '../src/onboarding-copy.ts'
 
+// This build ships no welcome notice. These tests own the notice's behavior, so
+// they enable it explicitly rather than asserting the deployment's choice.
+vi.mock('../src/onboarding-copy.ts', async importOriginal => ({
+  ...await importOriginal<typeof import('../src/onboarding-copy.ts')>(),
+  WELCOME_NOTICE_ENABLED: true,
+}))
+
+
 const schemaService = new SettingsSchemaService(new Context())
 
 /** The settings namespace answers over the Remote carrier, which has no envelope. */

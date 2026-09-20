@@ -17,6 +17,14 @@ import { DeepSeekOnboardingDialog } from '../src/client/DeepSeekOnboardingDialog
 import { WelcomeNotice } from '../src/client/WelcomeNotice.tsx'
 import { apply as hostApply } from '../src/index.ts'
 
+// This build ships no welcome notice. These tests own the notice's behavior, so
+// they enable it explicitly rather than asserting the deployment's choice.
+vi.mock('../src/onboarding-copy.ts', async importOriginal => ({
+  ...await importOriginal<typeof import('../src/onboarding-copy.ts')>(),
+  WELCOME_NOTICE_ENABLED: true,
+}))
+
+
 // These specs assert the shipped Chinese copy. The lane has no jsdom `window`,
 // so browser-language detection never runs and a fresh LocaleRuntime opens on
 // FALLBACK_LOCALE (en); bench stages zh explicitly on the locale instead.

@@ -8,7 +8,7 @@
 import { createSnapshotStore, type SnapshotStore } from '@deepseek-ai/dsh-client-store'
 import type { SettingsScope } from '@deepseek-ai/dsh-client-ui-settings/client'
 import {
-  WELCOME_NOTICE_ACK_FIELD, WELCOME_NOTICE_VERSION,
+  WELCOME_NOTICE_ACK_FIELD, WELCOME_NOTICE_ENABLED, WELCOME_NOTICE_VERSION,
 } from '../onboarding-copy.ts'
 
 /** State rendered by the welcome step. */
@@ -108,7 +108,7 @@ export class WelcomeNoticeStore {
     if (scope.mode === 'memory') {
       this.store.update((state) => {
         state.status = 'ready'
-        state.acknowledged = this.localAcknowledged
+        state.acknowledged = !WELCOME_NOTICE_ENABLED || this.localAcknowledged
         state.error = null
       })
       return
@@ -120,12 +120,16 @@ export class WelcomeNoticeStore {
       case 'unavailable':
         this.store.update((state) => {
           state.status = 'error'
-          state.acknowledged = false
+          state.acknowledged = !WELCOME_NOTICE_ENABLED
           state.error = 'welcome acknowledgement settings are unavailable'
         })
         return
       case 'ready': {
-        const acknowledged = scope.value?.[WELCOME_NOTICE_ACK_FIELD] === WELCOME_NOTICE_VERSION
+        // A build that ships no notice reports it already acknowledged, which is the
+        // same terminal state a user reaches by dismissing it: the step completes and
+        // the modal never mounts.
+        const acknowledged = !WELCOME_NOTICE_ENABLED
+          || scope.value?.[WELCOME_NOTICE_ACK_FIELD] === WELCOME_NOTICE_VERSION
         this.store.update((state) => {
           state.status = 'ready'
           state.acknowledged = acknowledged

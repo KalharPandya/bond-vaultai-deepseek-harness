@@ -24,6 +24,14 @@ import {
   WELCOME_NOTICE_VERSION,
 } from '../src/onboarding-copy.ts'
 
+// This build ships no welcome notice. These tests own the notice's behavior, so
+// they enable it explicitly rather than asserting the deployment's choice.
+vi.mock('../src/onboarding-copy.ts', async importOriginal => ({
+  ...await importOriginal<typeof import('../src/onboarding-copy.ts')>(),
+  WELCOME_NOTICE_ENABLED: true,
+}))
+
+
 const WELCOME_NOTICE_COPY = {
   en: { title: en.welcomeTitle, body: en.welcomeBody, continueLabel: en.welcomeContinue },
   zh: { title: zh.welcomeTitle, body: zh.welcomeBody, continueLabel: zh.welcomeContinue },
