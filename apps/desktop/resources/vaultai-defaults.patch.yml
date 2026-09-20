@@ -1,0 +1,42 @@
+# VaultAI deployment defaults for this build.
+#
+# This file is the whole VaultAI configuration. It is applied as an overlay
+# patch after every bundle layer and both user layers, which is what lets the
+# fork rebase onto a new upstream release without touching `dsh-base` or
+# `dsh-web-app`: upstream never edits a file it does not have, so this one
+# cannot conflict.
+#
+# A patch replaces the targeted row's whole `config`, so each row below
+# restates every key it owns.
+#
+# No API key lives here. `apiKeyEnv` names a credential that the
+# `credentials-local` row resolves per request from the process environment,
+# `$DSH_HOME/.credentials.yaml`, or a project/user `.env`. Supply it there, or
+# through the Models page in the application, which writes the managed
+# credential document.
+#
+# Users still override these defaults: the `llm-pi-ai:` section of
+# `$DSH_HOME/settings.yaml` merges per provider over this base, and that
+# document is exactly what the Models page writes.
+
+# The pi-ai adapter is mounted dormant by the shared base and registers routes
+# the moment a profile supplies them. This is that supply: one OpenAI-compatible
+# route at the VaultAI gateway.
+- id: llm-pi-ai
+  config:
+    providers:
+      vaultai:
+        displayName: VaultAI
+        api: openai-completions
+        baseURL: https://bond.vaultai.ca/v1
+        apiKeyEnv: VAULTAI_API_KEY
+        models:
+          - id: qwen/qwen3.6-35b-a3b
+            name: Qwen3.6 35B A3B
+
+# The transport-independent default for agents created by entry points. The
+# shared base names the official DeepSeek route here; this build names VaultAI.
+- id: agent-default-model
+  config:
+    provider: vaultai
+    model: qwen/qwen3.6-35b-a3b

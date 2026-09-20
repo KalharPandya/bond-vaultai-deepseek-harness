@@ -121,6 +121,7 @@ export function createElectronBuilderConfig(
     ],
     extraResources: [
       { from: buildPaths.runtime, to: 'runtime' },
+      { from: fileURLToPath(new URL('../resources/vaultai-defaults.patch.yml', import.meta.url)), to: 'vaultai-defaults.patch.yml' },
       { from: fileURLToPath(new URL('../resources/icon-windows.png', import.meta.url)), to: 'icon.png' },
     ],
     mac: {

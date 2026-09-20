@@ -20,7 +20,9 @@ async function main(): Promise<void> {
     profile: 'desktop',
     resolutionMode: process.argv[5] === 'runtime' ? 'runtime' : 'link',
     resolvedProfile: { profile, installAnchor },
-    patchFiles: [],
+    // Deployment defaults the shell resolved from the packaged resources; absent
+    // outside a packaged build, which then composes exactly like upstream.
+    patchFiles: process.env.DSH_DESKTOP_DEPLOYMENT_PATCH === undefined ? [] : [process.env.DSH_DESKTOP_DEPLOYMENT_PATCH],
     args: ['--no-open', '--port', '19387'],
     ...(process.argv[6] === undefined ? {} : {
       packageManager: {

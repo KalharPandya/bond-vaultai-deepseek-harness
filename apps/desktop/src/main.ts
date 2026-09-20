@@ -1,6 +1,7 @@
 import { WINDOWS_TITLEBAR_HEIGHT } from './windows-layout.ts'
 /** Electron shell: desktop project ownership, custom protocol, windows, and lifecycle. */
 
+import { existsSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -47,6 +48,17 @@ import { readDesktopRuntime } from './runtime-tree.ts'
 // composition keeps the opt-out ahead of every Host launch, including recovery
 // restarts, and leaves the shared bundle patches untouched.
 process.env.DSH_TELEMETRY_DISABLED = '1'
+
+/** Deployment defaults shipped beside the application and applied as an overlay patch. */
+const DEPLOYMENT_PATCH_FILE = 'vaultai-defaults.patch.yml'
+
+// The Host applies this after every composition layer. Resolving the path here
+// keeps the packaged resource layout in the shell, the half that knows it, and
+// keeps the deployment's own configuration out of every upstream bundle patch.
+const deploymentPatch = app.isPackaged
+  ? join(process.resourcesPath, DEPLOYMENT_PATCH_FILE)
+  : join(app.getAppPath(), 'resources', DEPLOYMENT_PATCH_FILE)
+if (existsSync(deploymentPatch)) process.env.DSH_DESKTOP_DEPLOYMENT_PATCH = deploymentPatch
 
 let focusPrimaryWindow = (): void => {}
 let stopForRecovery = async (): Promise<void> => {}
