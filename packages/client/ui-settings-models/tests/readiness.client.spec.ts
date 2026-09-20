@@ -2,22 +2,22 @@
 import { describe, expect, it } from 'vitest'
 import type { CredentialInfo } from '@deepseek-ai/dsh-api-remotes/client'
 import type { ModelsSettingsState, ProviderRow } from '../src/client/store.ts'
-import { onboardingReadiness, providerUsable } from '../src/client/store.ts'
+import { ONBOARDING_ROUTES, onboardingReadiness, providerUsable } from '../src/client/store.ts'
 
 const missingCredential: CredentialInfo = { configured: false, writable: true }
 
 function row(overrides: Partial<ProviderRow> = {}): ProviderRow {
   return {
     entry: {
-      provider: 'deepseek-official',
-      displayName: 'DeepSeek',
-      settingsNs: 'llm-deepseek',
-      settingsPath: [],
+      provider: ONBOARDING_ROUTES[0].provider,
+      displayName: 'VaultAI',
+      settingsNs: ONBOARDING_ROUTES[0].settingsNs,
+      settingsPath: ['providers', ONBOARDING_ROUTES[0].provider],
       active: true,
     },
     configured: true,
     removable: false,
-    apiKeyEnv: 'DEEPSEEK_API_KEY',
+    apiKeyEnv: 'VAULTAI_API_KEY',
     credential: missingCredential,
     ...overrides,
   }

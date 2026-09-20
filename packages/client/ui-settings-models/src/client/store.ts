@@ -285,11 +285,43 @@ export type OnboardingReadiness =
   }
 
 /**
+ * Routes the first-run step can offer a key field for, in deployment
+ * preference order. A deployment that declares its own gateway is offering
+ * that gateway, so it leads; the official DeepSeek route remains the fallback
+ * for a composition that declares no gateway of its own, which is what keeps
+ * the shared Web build's first run unchanged.
+ *
+ * Readiness and the dialog resolve through the same list, so the route the
+ * prompt decides on and the route it renders cannot drift apart.
+ */
+export const ONBOARDING_ROUTES = [
+  // `['providers', <provider>]` is the settings path a pi-ai route profile occupies.
+  { provider: 'vaultai', settingsNs: 'llm-pi-ai', settingsPath: ['providers', 'vaultai'] },
+  { provider: 'deepseek-official', settingsNs: 'llm-deepseek', settingsPath: [] },
+] as const
+
+/**
+ * Find the configurable-provider row the first-run step offers.
+ * @param state - current shared Models join snapshot.
+ * @returns the highest-preference declared row, or undefined when none is declared.
+ */
+export function findOnboardingRow(state: ModelsSettingsState): ModelsSettingsState['rows'][number] | undefined {
+  for (const route of ONBOARDING_ROUTES) {
+    const row = state.rows.find(candidate =>
+      candidate.entry.provider === route.provider
+      && candidate.entry.settingsNs === route.settingsNs
+      && candidate.entry.settingsPath.length === route.settingsPath.length)
+    if (row !== undefined) return row
+  }
+  return undefined
+}
+
+/**
  * Project first-run readiness from the provider/settings/credential join used
  * by the Models page. The step exists to leave the user with a model to talk
- * to, so ANY usable provider ends it; only when none exists does the official
- * DeepSeek route — the one route the prompt can offer a key field for — decide
- * whether prompting can help. A missing official configurable-provider
+ * to, so ANY usable provider ends it; only when none exists does the
+ * deployment's own route — the one route the prompt can offer a key field for
+ * — decide whether prompting can help. A missing configurable-provider
  * declaration means the adapter is not repairable by navigating to Models.
  * @param state - current shared Models join snapshot.
  * @returns the onboarding state without reading a parallel fact source.
@@ -305,10 +337,7 @@ export function onboardingReadiness(state: ModelsSettingsState): OnboardingReadi
     }
   }
   if (state.rows.some(providerUsable)) return { kind: 'provider-ready' }
-  const row = state.rows.find(candidate =>
-    candidate.entry.provider === 'deepseek-official'
-    && candidate.entry.settingsNs === 'llm-deepseek'
-    && candidate.entry.settingsPath.length === 0)
+  const row = findOnboardingRow(state)
   if (row === undefined) return { kind: 'adapter-absent' }
   if (!row.entry.active) {
     return {
