@@ -79,7 +79,7 @@ export async function packageMacOSArtifacts(
   if (update === undefined) {
     throw new Error('desktop macOS packaging: requires an updater deployment that publishes a feed')
   }
-  const appPath = join(artifactsRoot, arch === 'arm64' ? 'mac-arm64' : 'mac', 'DeepSeek Harness.app')
+  const appPath = join(artifactsRoot, arch === 'arm64' ? 'mac-arm64' : 'mac', 'Vaultai-secured-deepseek-harness.app')
   const root = await mkdtemp(join(dirname(artifactsRoot), 'notarization-'))
   const zipApp = join(root, 'zip', basename(appPath))
   const dmgApp = join(root, 'dmg', basename(appPath))
@@ -111,7 +111,7 @@ export async function packageMacOSArtifacts(
     await verifyMacOSAppUpdateConfig(dmgApp, update)
     apple.verifySignature(zipApp, expected)
     apple.verifySignature(dmgApp, expected)
-    const base = `deepseek-harness-${version}-mac-${arch}`
+    const base = `vaultai-secured-deepseek-harness-${version}-mac-${arch}`
     const artifacts = [
       [dmgOutput, `${base}.dmg`],
       [zipOutput, `${base}.zip`],
