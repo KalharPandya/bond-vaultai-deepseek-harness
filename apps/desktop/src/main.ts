@@ -411,6 +411,10 @@ async function main(): Promise<void> {
 
   const updateSchedule = new DesktopUpdateSchedule(updates, resolveDesktopUpdateScheduleConfig(process.env))
 
+  // No packaged updater feed means the updater has nothing to talk to: suppress its
+  // checks, menu entry, and prompt so a manual check cannot fail into a crash.
+  const updatesEnabled = updates.isEnabled
+
   const downloadUpdate = async (version: string): Promise<DesktopUpdateState> => {
     updateJournal?.action('download-requested')
     const state = await updates.download(version)
@@ -482,6 +486,7 @@ async function main(): Promise<void> {
   let promptOperation: Promise<void> | undefined
   let policyAuthenticationQueued = false
   const openUpdatePrompt = (manual = false): Promise<void> => {
+    if (!updatesEnabled) return Promise.resolve()
     if (authenticationOperation !== undefined) {
       policyAuth?.focus(); updateDialog.focus()
     }
@@ -589,6 +594,7 @@ async function main(): Promise<void> {
   }
 
   const automaticCheck = (): void => {
+    if (!updatesEnabled) return
     if (!quitting) void mandatoryPolicy?.check('foreground-or-resume').catch((error: unknown) => { console.error(error) })
     if (!quitting) void updateSchedule.check().catch((error: unknown) => { console.error(error) })
   }
@@ -619,8 +625,11 @@ async function main(): Promise<void> {
     : []
   const applicationItems = (): MenuItemConstructorOptions[] => [
     { label: currentDesktopLocale().messages.aboutMenu, role: 'about' },
-    { type: 'separator' },
-    { label: currentDesktopLocale().messages.checkUpdatesMenu, click: () => { void openUpdatePrompt(true) } },
+    // The updater entry only appears when a packaged feed is present; without it,
+    // omit both the item and its separator so no double separator remains.
+    ...(updatesEnabled
+      ? [{ type: 'separator' } as const, { label: currentDesktopLocale().messages.checkUpdatesMenu, click: () => { void openUpdatePrompt(true) } }]
+      : []),
     { type: 'separator' },
     ...hideCommands,
     { role: 'quit', ...(process.platform === 'win32' ? { label: currentDesktopLocale().messages.exitApplication } : {}) },

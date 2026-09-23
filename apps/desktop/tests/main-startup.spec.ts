@@ -246,6 +246,7 @@ vi.mock('../src/update-coordinator.ts', () => ({ DesktopUpdateCoordinator: class
     harness.publishUpdate = publish
   }
   get state() { return harness.updateState }
+  get isEnabled() { return true }
   readonly check = harness.updateCheck
   readonly download = harness.updateDownload
   readonly install = harness.updateInstall
