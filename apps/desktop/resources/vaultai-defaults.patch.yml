@@ -24,6 +24,8 @@
 # route at the VaultAI gateway.
 - id: llm-pi-ai
   config:
+    # VaultAI is shipped first-party, so it is not flagged custom in the Models page.
+    firstPartyProviders: [vaultai]
     providers:
       vaultai:
         displayName: VaultAI
@@ -33,6 +35,7 @@
         models:
           - id: openai/gpt-oss-20b
             name: GPT-OSS 20B
+            contextWindow: 131072
 
 # The transport-independent default for agents created by entry points. The
 # shared base names the official DeepSeek route here; this build names VaultAI.
@@ -40,3 +43,8 @@
   config:
     provider: vaultai
     model: openai/gpt-oss-20b
+
+# Remove the preconfigured DeepSeek provider from the Models page. This build
+# ships VaultAI as its only default provider; users can still add their own.
+- id: llm-deepseek
+  disabled: true
