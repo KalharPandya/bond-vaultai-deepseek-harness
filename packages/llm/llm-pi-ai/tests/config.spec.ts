@@ -57,6 +57,13 @@ describe('reasoning schema boundary', () => {
   })
 })
 
+describe('first-party providers schema', () => {
+  it('keeps the configured first-party list and defaults an absent one to empty', () => {
+    expect(new Config({ firstPartyProviders: ['vaultai'] }).firstPartyProviders).toEqual(['vaultai'])
+    expect(new Config({}).firstPartyProviders).toEqual([])
+  })
+})
+
 describe('modality schema boundary', () => {
   it('rejects a modality pi-ai does not know, at either level', () => {
     expect(configWith({ input: ['audio'] })).toThrow(/expected/)

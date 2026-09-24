@@ -116,10 +116,12 @@ function registrationFacts(profiles: ReadonlyMap<string, ResolvedPiAiProviderPro
  * catalog entry, so without this union it would have no settings address and
  * configuration surfaces could neither show nor edit it.
  * @param profiles - the currently resolved provider profiles.
+ * @param firstParty - provider ids this deployment ships, never flagged declared.
  * @returns the directory entries in catalog order, declared routes last.
  */
 function directoryEntries(
   profiles: ReadonlyMap<string, ResolvedPiAiProviderProfile>,
+  firstParty: ReadonlySet<string>,
 ): LlmConfigurableProvider[] {
   const catalog = new Set(catalogProviderIds())
   const entries = new Map<string, LlmConfigurableProvider>()
@@ -132,7 +134,7 @@ function directoryEntries(
       // Membership of the installed catalog, not of the settings document:
       // narrowing a shipped provider's models stores a profile too, and that
       // route is still one pi-ai knows.
-      declared: !catalog.has(provider),
+      declared: !catalog.has(provider) && !firstParty.has(provider),
       ...error === undefined ? {} : { error },
     })
   }
@@ -224,7 +226,7 @@ export function apply(ctx: Context, config: Config): void {
   let directory: DirectoryRegistrationHandle | undefined
   let directoryFacts: unknown
   const ensureDirectory = (): void => {
-    const entries = directoryEntries(profiles())
+    const entries = directoryEntries(profiles(), new Set(config.firstPartyProviders ?? []))
     if (deepEqualJson(entries, directoryFacts)) return
     // Atomic replace, never dispose-then-register: a route another adapter
     // family already declares (a profile keyed `deepseek-official`) would

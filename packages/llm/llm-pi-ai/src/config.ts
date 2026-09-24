@@ -225,6 +225,12 @@ export interface Config {
    * and registers them the moment a settings section supplies profiles.
    */
   providers?: Record<string, PiAiProviderProfile>
+  /**
+   * Provider ids this deployment ships as first-party routes. They are not
+   * flagged as declared/custom in configuration surfaces even though they are
+   * not in the installed pi-ai catalog. User-added routes remain custom.
+   */
+  firstPartyProviders?: string[]
 }
 
 const thinkingBudgets = z.object({
@@ -347,6 +353,7 @@ const profile = z.object({
 /** Runtime schema for {@link Config}. */
 export const Config: z<Config> = z.object({
   providers: z.dict(profile).default({}),
+  firstPartyProviders: z.array(z.string()).default([]),
 })
 
 /**

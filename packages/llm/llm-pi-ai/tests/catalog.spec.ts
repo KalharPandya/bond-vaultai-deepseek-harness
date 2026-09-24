@@ -154,6 +154,21 @@ describe('hand-declared providers', () => {
     expect(directory.find(entry => entry.provider === 'deepseek')?.declared).toBe(false)
   })
 
+  it('does not flag a first-party route as declared, while an unlisted one stays custom', async () => {
+    const server = await mockServer([])
+    // Same non-catalog route, once shipped as first-party and once not.
+    const shipped = await harness(gateway(`${server.url}/v1`))
+    expect(shipped.llm.listConfigurableProviders().find(entry => entry.provider === 'acme-gateway')?.declared)
+      .toBe(true)
+
+    const firstParty = await harness({
+      ...gateway(`${server.url}/v1`),
+      firstPartyProviders: ['acme-gateway'],
+    })
+    expect(firstParty.llm.listConfigurableProviders().find(entry => entry.provider === 'acme-gateway')?.declared)
+      .toBeFalsy()
+  })
+
   it('sizes a model the catalog cannot describe from the route\u2019s own fallbacks', () => {
     const resolved = resolveProfiles({
       'acme-gateway': {
