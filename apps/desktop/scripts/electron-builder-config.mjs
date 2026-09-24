@@ -1,4 +1,5 @@
 import { join } from 'node:path'
+import { valid } from 'semver'
 import { fileURLToPath } from 'node:url'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
@@ -34,6 +35,19 @@ import {
  * @param {string | undefined} preparedRuntime - Verified private dsh tree for installed-update qualification; ordinary releases use the target tree.
  * @returns {object} electron-builder configuration.
  */
+/**
+ * Resolve an explicit shipped version for this build, letting a self-hosted feed
+ * advertise an incrementing version without changing the repository's manifests.
+ * @param {NodeJS.ProcessEnv} env - Packaging environment.
+ * @returns {{ version: string } | {}} The version override, or nothing when unset.
+ */
+function resolveReleaseVersionOverride(env) {
+  const value = env.DSH_DESKTOP_RELEASE_VERSION?.trim()
+  if (value === undefined || value === '') return {}
+  if (valid(value) === null) throw new Error(`desktop package: DSH_DESKTOP_RELEASE_VERSION must be a valid semver, got ${JSON.stringify(value)}`)
+  return { version: value }
+}
+
 export function createElectronBuilderConfig(
   env = process.env,
   hostPlatform = process.platform,
@@ -82,7 +96,7 @@ export function createElectronBuilderConfig(
   if (preparedRuntime !== undefined) buildPaths.dsh = preparedRuntime
   return {
     appId,
-    extraMetadata: { dshDesktopAppId: appId, dshMandatoryUpdatePolicy: policy },
+    extraMetadata: { dshDesktopAppId: appId, dshMandatoryUpdatePolicy: policy, ...resolveReleaseVersionOverride(env) },
     productName: 'Vaultai-secured-deepseek-harness',
     artifactName: 'vaultai-secured-deepseek-harness-${version}-${os}-${arch}.${ext}',
     directories: { output: unsigned ? join(buildPaths.root, 'unsigned-artifacts') : buildPaths.artifacts },
