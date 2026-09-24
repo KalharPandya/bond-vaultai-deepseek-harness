@@ -435,6 +435,10 @@ async function main(): Promise<void> {
       }
       return forwardWebRequest(request, hostUrl, hostCookie)
     }
+    // Shell documents (the update dialog and mandatory-update window) load from
+    // dsh-app://shell/*; serve them from the packaged renderer directory. Without
+    // this branch the update dialog window loads nothing and greys out the app.
+    if (url.hostname === 'shell') return serveWebDocument(request, join(app.getAppPath(), 'renderer'))
     return Promise.resolve(new Response(null, { status: 404 }))
   })
 
