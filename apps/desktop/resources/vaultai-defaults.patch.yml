@@ -48,3 +48,13 @@
 # ships VaultAI as its only default provider; users can still add their own.
 - id: llm-deepseek
   disabled: true
+
+# Make the assistant identify as VaultAI. The shared base emits a fixed
+# "powered by DeepSeek Harness" identity line; disabling it and supplying the
+# deployment persona prefix replaces that first line with the VaultAI identity.
+# Done here, at the deployment layer, so the core system-prompt source and its
+# snapshot fixtures stay untouched and upstream merges stay clean.
+- id: system-prompt
+  config:
+    includeHarnessIdentity: false
+    personaPrefix: 'You are an AI agent powered by VaultAI.'

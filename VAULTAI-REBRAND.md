@@ -104,8 +104,28 @@ conflict with us.
 - The DeepSeek provider's own config defaults in `ui-settings-models` locales
   (`api.deepseek.com` base URLs). Correct for anyone who adds the DeepSeek provider; not
   app branding.
-- Model-facing identity string in `packages/core/system-prompt/src/index.ts:430`:
-  `"You are an AI agent powered by DeepSeek Harness."` This is sent to the LLM, not shown as
-  UI. Changing it alters how the assistant identifies itself. DECISION NEEDED: flip to
-  VaultAI if you want the assistant to self-identify as VaultAI. Left as-is for now.
 - `apps/cli/src/args.ts:141` CLI `--help` description. Not surfaced in the desktop GUI.
+
+## 5. Model-facing identity (overlay, no core edit)
+
+The shared base emits a fixed first system-prompt line: `You are an AI agent powered by
+DeepSeek Harness.` (`packages/core/system-prompt/src/index.ts`, gated on the config
+`includeHarnessIdentity`). Editing that string is tempting but it is the first line of every
+`snapshots/**/system-prompt.expected.md` fixture (55+ files), so changing the source turns
+every upstream merge into a snapshot-conflict slog.
+
+Instead the deployment overlay `apps/desktop/resources/vaultai-defaults.patch.yml` overrides
+the `system-prompt` row:
+
+```yaml
+- id: system-prompt
+  config:
+    includeHarnessIdentity: false
+    personaPrefix: 'You are an AI agent powered by VaultAI.'
+```
+
+`includeHarnessIdentity: false` drops the DeepSeek identity section; `personaPrefix` supplies
+the VaultAI line in its place (the section that would sit right after it). The upstream test
+`system-prompt.spec.ts` "can omit the harness identity for a deployment that owns the complete
+persona" pins this exact behavior. Core source and all snapshot fixtures stay untouched, so
+this costs nothing on rebase.
