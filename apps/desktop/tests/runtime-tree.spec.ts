@@ -57,7 +57,11 @@ it.each(['missing', 'directory'])('checks a %s Host entry only during build veri
 it('checks the shell version only during build verification', async () => {
   const dsh = join(fixture(), 'dsh')
   expect(readDesktopRuntime(dsh).release.version).toBe('1.0.0')
-  await expect(verifyDesktopRuntime(dsh, '2.0.0')).rejects.toThrow(/does not match Electron/u)
+  await expect(verifyDesktopRuntime(dsh, '2.0.0')).rejects.toThrow(/must share the bundled dsh base version/u)
+  // A build-number suffix over the same base is accepted (self-hosted updater shell version).
+  await expect(verifyDesktopRuntime(dsh, '1.0.0.20260924.1')).resolves.toBeDefined()
+  // A different base that merely shares a numeric prefix is still rejected.
+  await expect(verifyDesktopRuntime(dsh, '1.0.05')).rejects.toThrow(/must share the bundled dsh base version/u)
 })
 it.each([
   { schemaVersion: 2 },

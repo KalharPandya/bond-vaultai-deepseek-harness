@@ -195,7 +195,12 @@ export async function verifyDesktopRuntime(
     throw new Error('desktop runtime: invalid descriptor or incompatible platform/architecture')
   }
   const release = parseDesktopRelease(descriptor.release)
-  if (release.version !== electronVersion) throw new Error(`desktop runtime: ${release.version} does not match Electron ${electronVersion}`)
+  // The shell may carry a build-number suffix over the bundled dsh base version
+  // (a self-hosted updater advertises an incrementing shell version while the
+  // qualified dsh runtime stays fixed); a different base is still rejected.
+  if (electronVersion !== release.version && !electronVersion.startsWith(`${release.version}.`)) {
+    throw new Error(`desktop runtime: Electron ${electronVersion} must share the bundled dsh base version ${release.version}`)
+  }
   for (const entry of descriptor.sharedPackages) {
     const manifest: unknown = JSON.parse(readFileSync(join(runtimePath(root, entry.path), 'package.json'), 'utf8'))
     if (!record(manifest) || manifest.name !== entry.name || manifest.version !== entry.version) {
