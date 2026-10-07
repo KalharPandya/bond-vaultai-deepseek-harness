@@ -49,6 +49,12 @@
 - id: llm-deepseek
   disabled: true
 
+# Remove the "powered by dsh" badge skill. It inserts a DeepSeek-logo badge that
+# links to the upstream repository into user documents, which this build should
+# not do.
+- id: skill-badge
+  disabled: true
+
 # Make the assistant identify as VaultAI. The shared base emits a fixed
 # "powered by DeepSeek Harness" identity line; disabling it and supplying the
 # deployment persona prefix replaces that first line with the VaultAI identity.
