@@ -39,8 +39,16 @@ Regeneration script kept in the session scratchpad: `gen-assets.mjs` (uses `shar
 | `apps/desktop/installer/assets/brand.png` (600x196) | whale + "deepseek HARNESS" | VaultAI wordmark |
 | `apps/desktop/installer/assets/brand-2x.png` (1200x392) | same | VaultAI wordmark |
 | `apps/desktop/installer/assets/brand-dark.png` (600x196) | same | VaultAI wordmark |
+| `apps/desktop/installer/assets/brand-dark-2x.png` (1200x392) | same | VaultAI wordmark (the image a dark-mode, high-DPI installer shows) |
+| `apps/desktop/resources/icon.svg`, `icon-windows.svg`, `icon-macos.svg` | whale vector source | SVG wrapping the shipped VaultAI PNG, so a re-export per the README cannot bring the whale back |
 | `apps/desktop/installer/assets/uninstaller-sidebar.png` (164x314) | whale panel | VaultAI vault panel |
 | `apps/web/public/favicon.svg` | whale silhouette path | vault (hexagon ring + padlock + keyhole), monochrome |
+
+Installer note: the installer picks its splash by theme and DPI (`installer/pages.nsh`):
+`brand` or `brand-dark`, plus the `-2x` file on high-DPI screens. All four must be VaultAI.
+To catch any image still matching upstream, list tracked images and diff them against the
+fork base: `git diff --name-only ddefc45fbc -- <image paths>`. Anything not in that list is
+untouched upstream art. The only remaining one is `renderer/update-close.svg`, a plain "X".
 
 favicon note: the PWA e2e (`apps/web/tests/pwa-manifest.e2e.ts`) requires the favicon to
 contain `fill="#000"` and a `@media (prefers-color-scheme: dark){ path { ... fill:#fff }`
@@ -105,6 +113,9 @@ conflict with us.
   (`api.deepseek.com` base URLs). Correct for anyone who adds the DeepSeek provider; not
   app branding.
 - `apps/cli/src/args.ts:141` CLI `--help` description. Not surfaced in the desktop GUI.
+- The `skill-badge` package (whale "powered by dsh" badge linking to the upstream repo) is
+  left in place but disabled for this build by the overlay row `- id: skill-badge /
+  disabled: true` in `vaultai-defaults.patch.yml`, so the assistant never inserts it.
 
 ## 5. Model-facing identity (overlay, no core edit)
 
