@@ -10,7 +10,7 @@ export const inject = ['slots']
 
 /**
  * Fill the sidebar brand slots as one declaration-aware registration set. The
- * official build also fills the conversation hero brand mark with the VaultAI
+ * official build also fills the conversation hero brand mark with the Northwest Harness
  * mark.
  * @param ctx - Client root context.
  */

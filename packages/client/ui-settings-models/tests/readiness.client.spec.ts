@@ -10,7 +10,7 @@ function row(overrides: Partial<ProviderRow> = {}): ProviderRow {
   return {
     entry: {
       provider: ONBOARDING_ROUTES[0].provider,
-      displayName: 'VaultAI',
+      displayName: 'Northwest Harness',
       settingsNs: ONBOARDING_ROUTES[0].settingsNs,
       settingsPath: ['providers', ONBOARDING_ROUTES[0].provider],
       active: true,

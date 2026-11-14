@@ -24,25 +24,103 @@
 # route at the VaultAI gateway.
 - id: llm-pi-ai
   config:
-    # VaultAI is shipped first-party, so it is not flagged custom in the Models page.
+    # Northwest Harness ships vaultai as first-party, wired directly to the local GMKtec gateway.
     firstPartyProviders: [vaultai]
     providers:
       vaultai:
-        displayName: VaultAI
+        displayName: Northwest Harness
         api: openai-completions
-        baseURL: https://bond.vaultai.ca/v1
+        baseURL: http://vaultai.local/v1
         apiKeyEnv: VAULTAI_API_KEY
+        headers:
+          X-VaultAI-Reasoning: preserve
+        cacheRetention: long
+        defaultContextWindow: 65536
+        defaultMaxTokens: 16384
+        reasoning: medium
+        compat:
+          supportsUsageInStreaming: true
+          supportsDeveloperRole: false
+          supportsReasoningEffort: true
+          requiresReasoningContentOnAssistantMessages: true
+          supportsLongCacheRetention: true
         models:
-          - id: openai/gpt-oss-20b
-            name: GPT-OSS 20B
-            contextWindow: 131072
+          - id: Qwen3.8-27B-Gufo
+            name: Qwen 3.8 27B Gufo (Primary)
+            input: [text, image]
+            contextWindow: 65536
+            maxTokens: 16384
+            reasoningEfforts:
+              off: none
+              low: low
+              medium: medium
+              high: high
+          - id: Qwen3.8-27B-GGUF
+            name: Qwen 3.8 27B GGUF (Concurrent)
+            input: [text, image]
+            contextWindow: 65536
+            maxTokens: 16384
+            reasoningEfforts:
+              off: none
+              low: low
+              medium: medium
+              high: high
+          - id: qwen3.6-35b-a3b
+            name: Qwen 3.6 35B-A3B (Fast MoE)
+            input: [text, image]
+            contextWindow: 65536
+            maxTokens: 16384
+            reasoningEfforts:
+              off: none
+              low: low
+              medium: medium
+              high: high
+          - id: gpt-oss-20b
+            name: GPT-OSS 20B (Ultra-Fast)
+            input: [text]
+            contextWindow: 65536
+            maxTokens: 16384
+            reasoningEfforts:
+              off:
+              low: low
+              medium: medium
+              high: high
+          - id: Qwen3.8-27B-ROCmFP4-STRIX-MTP
+            name: Qwen 3.8 27B ROCm FP4
+            input: [text, image]
+            contextWindow: 32768
+            maxTokens: 8192
+            reasoningEfforts:
+              off: none
+              low: low
+              medium: medium
+              high: high
+          - id: nvidia-nemotron-3-nano-30b-a3b
+            name: Nemotron 3 Nano 30B-A3B
+            input: [text]
+            contextWindow: 65536
+            maxTokens: 16384
+            reasoningEfforts:
+              off:
+              low: low
+              medium: medium
+              high: high
+          - id: gpt-oss-120b-mxfp4
+            name: GPT-OSS 120B MXFP4 (Heavy)
+            input: [text]
+            contextWindow: 32768
+            maxTokens: 8192
+            reasoningEfforts:
+              off:
+              low: low
+              medium: medium
+              high: high
 
-# The transport-independent default for agents created by entry points. The
-# shared base names the official DeepSeek route here; this build names VaultAI.
+# The transport-independent default for agents created by entry points.
 - id: agent-default-model
   config:
     provider: vaultai
-    model: openai/gpt-oss-20b
+    model: Qwen3.8-27B-Gufo
 
 # Remove the preconfigured DeepSeek provider from the Models page. This build
 # ships VaultAI as its only default provider; users can still add their own.
@@ -63,4 +141,4 @@
 - id: system-prompt
   config:
     includeHarnessIdentity: false
-    personaPrefix: 'You are an AI agent powered by VaultAI.'
+    personaPrefix: 'You are an AI agent powered by Northwest Harness.'

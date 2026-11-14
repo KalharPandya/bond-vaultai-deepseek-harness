@@ -1,142 +1,79 @@
-# VaultAI rebrand change map
+# Northwest Harness white-label & VaultAI change map
 
-Purpose: track every user-facing DeepSeek to VaultAI change in this fork so pulling
-upstream (deepseek-ai/deepseek-harness) stays low-conflict.
+Purpose: track every user-facing DeepSeek / VaultAI -> **Northwest Harness** white-label change and GMKtec local gateway wiring in this repository (`kalhar/private-windows-build`) so pulling upstream (`deepseek-ai/deepseek-harness`) stays low-conflict.
 
 - Fork base commit: `ddefc45fbc` (upstream release 0.1.6-alpha.2)
 - Branch: `kalhar/private-windows-build`
-- Guiding rule: rebrand only what a user actually sees (product name text + logos).
-  Do NOT rename packages (`@deepseek-ai/*`), provider ids (`deepseek-official`,
-  `llm-deepseek`), env vars (`DSH_*`), code identifiers, or npm `description` fields.
-  Those touch ~4800 references, break nothing visible, and would make every future
-  merge painful.
+- Guiding rule: white-label only what a user actually sees (product name, logos/wordmarks,
+  desktop metadata, default provider config, and model-facing persona). Do NOT rename
+  packages (`@deepseek-ai/*`), provider ids (`deepseek-official`, `llm-deepseek`), env vars
+  (`DSH_*`), code identifiers, or upstream API defaults. That keeps future upstream merges
+  clean while shipping **Northwest Harness** as the white-labeled build.
 
 ## How the merge stays easy
 
 Two kinds of change live here:
 
-1. Overlay / additive (no upstream file touched): the VaultAI mark is injected through
-   existing UI slots and a runtime deployment patch. These never conflict on rebase.
-2. In-place string/asset edits to upstream files: listed below with before to after so a
-   conflicting hunk on `git pull` is a two-second re-apply.
-
-When upstream changes one of the in-place files, re-apply the same swap. When upstream
-changes a slot contract, only the overlay package (`ui-brand-official`) needs a look.
+1. Overlay / additive (no upstream file touched): the Northwest Harness mark is injected
+   through existing UI slots and a runtime deployment patch (`apps/desktop/resources/vaultai-defaults.patch.yml`).
+2. In-place string/asset edits to upstream files: listed below so a conflicting hunk on
+   `git pull` is a fast re-apply.
 
 ---
 
 ## 1. Logos and image assets (binary, regenerate from source)
 
-Source of truth for the mark: `P:\Vaultai\VaultAI\resources\` (real VaultAI assets):
-`icon.png` (padlock-in-hexagon), `vaultai-wordmark-ui.png` (badge + "VaultAI").
-Regeneration script kept in the session scratchpad: `gen-assets.mjs` (uses `sharp`).
+Northwest Harness uses a custom geometric "NW" rounded-square badge (`#141923` charcoal + `#FFFFFF` / `#38BDF8` accent) rendered via Playwright Chromium from vector SVG sources.
 
-| File | Was | Now |
-| --- | --- | --- |
-| `apps/desktop/resources/icon.png` (1104) | DeepSeek whale on light card | VaultAI vault on light card |
-| `apps/desktop/resources/icon-windows.png` (1024) | whale | vault (Windows `.ico` is rasterized from this at build) |
-| `apps/desktop/resources/icon-macos.png` (1024) | whale | vault |
-| `apps/desktop/installer/assets/brand.png` (600x196) | whale + "deepseek HARNESS" | VaultAI wordmark |
-| `apps/desktop/installer/assets/brand-2x.png` (1200x392) | same | VaultAI wordmark |
-| `apps/desktop/installer/assets/brand-dark.png` (600x196) | same | VaultAI wordmark |
-| `apps/desktop/installer/assets/brand-dark-2x.png` (1200x392) | same | VaultAI wordmark (the image a dark-mode, high-DPI installer shows) |
-| `apps/desktop/resources/icon.svg`, `icon-windows.svg`, `icon-macos.svg` | whale vector source | SVG wrapping the shipped VaultAI PNG, so a re-export per the README cannot bring the whale back |
-| `apps/desktop/installer/assets/uninstaller-sidebar.png` (164x314) | whale panel | VaultAI vault panel |
-| `apps/web/public/favicon.svg` | whale silhouette path | vault (hexagon ring + padlock + keyhole), monochrome |
+| File | Description |
+| --- | --- |
+| `apps/desktop/resources/icon.png` (`1104x1104`), `icon-windows.png` (`1024x1024`), `icon-macos.png` (`1024x1024`) | Northwest Harness `NW` badge PNGs (transparent corners) + matching `icon.svg`, `icon-windows.svg`, `icon-macos.svg` |
+| `apps/desktop/installer/assets/brand.png` (`600x196`), `brand-2x.png` (`1200x392`) | Light-mode NSIS installer wordmark ("NORTHWEST HARNESS") |
+| `apps/desktop/installer/assets/brand-dark.png` (`600x196`), `brand-dark-2x.png` (`1200x392`) | Dark-mode NSIS installer wordmark |
+| `apps/desktop/installer/assets/uninstaller-sidebar.png` (`164x314`) | Uninstaller left panel with Northwest Harness badge on `#F5F6F8` |
+| `apps/web/public/favicon.svg` | Monochrome Northwest (`NW`) favicon with `@media (prefers-color-scheme: dark)` inversion support |
 
-Installer note: the installer picks its splash by theme and DPI (`installer/pages.nsh`):
-`brand` or `brand-dark`, plus the `-2x` file on high-DPI screens. All four must be VaultAI.
-To catch any image still matching upstream, list tracked images and diff them against the
-fork base: `git diff --name-only ddefc45fbc -- <image paths>`. Anything not in that list is
-untouched upstream art. The only remaining one is `renderer/update-close.svg`, a plain "X".
-
-favicon note: the PWA e2e (`apps/web/tests/pwa-manifest.e2e.ts`) requires the favicon to
-contain `fill="#000"` and a `@media (prefers-color-scheme: dark){ path { ... fill:#fff }`
-rule. The vault favicon keeps both: fill-based `<path>` elements with evenodd holes, so the
-dark-mode flip still works. Do not switch it to stroke-based paths.
+favicon note: the PWA e2e (`apps/web/tests/pwa-manifest.e2e.ts`) requires the favicon to contain `fill="#000"` and a `@media (prefers-color-scheme: dark){ path { ... fill:#fff }` rule.
 
 ## 2. User-visible product-name text (in-place edits)
 
-All "DeepSeek Harness" to "VaultAI" (short_name "DSH" and identifiers left as-is):
+All user-facing product names updated to **Northwest Harness** (`short_name: "NW"`):
 
-| File | Line (approx) | Before | After |
-| --- | --- | --- | --- |
-| `scripts/client-build-environment.ts` | 22 | `DSH_CLIENT_TITLE: 'DeepSeek Harness'` | `'VaultAI'` |
-| `apps/web/public/manifest.webmanifest` | 3 | `"name": "DeepSeek Harness"` | `"name": "VaultAI"` |
-| `packages/client/ui-sidebar-documentpreview/src/client/office/locales.ts` | 13 (zh), 37 (en) | `...DeepSeek Harness...` | `...VaultAI...` |
-| `packages/client/ui-plugin-manager/src/client/locales.ts` | 74 (zh), 236 (en) | `...DeepSeek Harness...` | `...VaultAI...` |
-| `packages/client/ui-settings-models/src/client/locales.ts` | 100 (en), 211 (zh) welcomeBody | `DeepSeek Harness` / `'s` | `VaultAI` / `'s` |
-| `packages/bundle/web-app/src/index.ts` | 139, 246 | `DeepSeek Harness Web GUI` | `VaultAI Web GUI` |
-| `packages/bundle/web-app/src/startup.ts` | 49 | `Serve the DeepSeek Harness browser UI.` | `Serve the VaultAI browser UI.` |
-| `packages/boot/app-boot/src/index.ts` | 1009 | `The DeepSeek Harness implementation checkout is at` | `The VaultAI implementation checkout is at` |
+- `scripts/client-build-environment.ts` (`DSH_CLIENT_TITLE: 'Northwest Harness'`)
+- `apps/web/public/manifest.webmanifest` (`name: "Northwest Harness"`, `short_name: "NW"`)
+- `packages/client/ui-sidebar-documentpreview/src/client/office/locales.ts`
+- `packages/client/ui-plugin-manager/src/client/locales.ts`
+- `packages/client/ui-settings-models/src/client/locales.ts`
+- `packages/bundle/web-app/src/{index,startup}.ts` (`Northwest Harness Web GUI`)
+- `packages/boot/app-boot/src/index.ts`
+- `apps/desktop/{README.md,README.zh.md,package.json,src/main.ts,src/locale.ts,scripts/electron-builder-config.mjs,scripts/desktop-upload-plan.ts,scripts/installed-update-distribution.ts,scripts/package-macos.ts,installer/strings.nsh}` (packaged Windows productName `Northwest Harness`, artifactName `northwest-harness-${version}-${os}-${arch}.${ext}`)
+- Corresponding unit/scaffold test assertions in `apps/web/tests/scaffold.ts`, `packages/client/ui-settings-models/tests/*`, `packages/bundle/web-app/tests/web-app.spec.ts`, `packages/boot/app-boot/tests/app-boot.spec.ts`, and `apps/desktop/tests/*`.
 
-Test assertions updated to match (same strings):
-`packages/client/ui-settings-models/tests/welcome-notice.client.spec.tsx` (118),
-`packages/bundle/web-app/tests/web-app.spec.ts` (157),
-`packages/boot/app-boot/tests/app-boot.spec.ts` (1221).
+## 3. Official brand UI slots (`packages/client/ui-brand-official`)
 
-Earlier (pre-existing in this branch) product-name and provider changes also live in:
-`apps/desktop/src/main.ts` (`applicationName: 'Vaultai-secured-deepseek-harness'`),
-`apps/desktop/scripts/electron-builder-config.mjs` (productName / artifactName),
-`apps/desktop/package.json` (`description` drives the installer FileDescription),
-`apps/desktop/installer/strings.nsh` (6 installer strings).
+Mounted when `DSH_CLIENT_BUILD_PROFILE === 'official'`:
 
-## 3. The VaultAI mark (overlay, no upstream file touched)
+- `src/client/Brand.tsx`: `OfficialBrandMark` (geometric `NW` SVG mark), `OfficialBrandName` rendering `OFFICIAL_BRAND_COPY.name` (`Northwest Harness`).
+- `src/client/locales.ts`: centralizes `OFFICIAL_BRAND_COPY` so `pnpm run verify-client-ui-i18n` passes cleanly.
+- `src/client/index.ts`: occupies `sidebar.brand.mark`, `sidebar.brand.name`, and `conversation.hero.brand.mark`.
 
-Package `packages/client/ui-brand-official` fills the generic brand slots when the client
-build profile is `official` (our build). This is how the sidebar AND the empty-conversation
-hero show the VaultAI vault instead of the whale, without editing `ui-sidebar`,
-`ui-conversation`, `FishLogo.tsx`, or `EmptyHero.tsx`.
+## 4. GMKtec / Lemonade gateway wiring & prompt cache (`vaultai-defaults.patch.yml`)
 
-- `src/client/Brand.tsx`: `OfficialBrandMark` renders the padlock-in-hexagon (currentColor
-  strokes/fill; keyhole punched with `var(--dsw-alias-bg-canvas)` so it adapts to theme).
-  `OfficialBrandName` renders `<span>VaultAI</span>`.
-- `src/client/index.ts`: registers `sidebar.brand.mark`, `sidebar.brand.name`, and now also
-  `conversation.hero.brand.mark`. All guarded by `DSH_CLIENT_BUILD_PROFILE === 'official'`.
-- `package.json`: added devDep `@deepseek-ai/dsh-client-ui-conversation` (for the hero slot
-  type). `tsconfig.json`: added the matching `../ui-conversation` project reference.
-- `tests/browser-plugin.client.spec.tsx`: updated to expect the hero hole filled and the
-  name to render text "VaultAI".
+`apps/desktop/resources/vaultai-defaults.patch.yml` wires the default first-party `vaultai` provider route directly to the connected GMKtec EVO-X2 gateway (`http://vaultai.local/v1`):
 
-Upstream leaves `FishLogo` (the whale) as the slot fallback; we simply occupy the slot, so
-the whale code is still present and untouched, and a future upstream whale change cannot
-conflict with us.
-
-## 4. Deliberately NOT changed (and why)
-
-- Package `@deepseek-ai/*` names, `deepseek-official` provider id, `llm-deepseek`, all
-  `DSH_*` env vars, code identifiers (`DeepSeekModelsEditor`, `validateDeepSeekModels`,
-  etc.). Renaming breaks the app and every merge.
-- npm `package.json` `description` fields and JSDoc provenance comments that mention
-  "DeepSeek Harness" / "DeepSeek Chat". Not shown in the UI.
-- The DeepSeek provider's own config defaults in `ui-settings-models` locales
-  (`api.deepseek.com` base URLs). Correct for anyone who adds the DeepSeek provider; not
-  app branding.
-- `apps/cli/src/args.ts:141` CLI `--help` description. Not surfaced in the desktop GUI.
-- The `skill-badge` package (whale "powered by dsh" badge linking to the upstream repo) is
-  left in place but disabled for this build by the overlay row `- id: skill-badge /
-  disabled: true` in `vaultai-defaults.patch.yml`, so the assistant never inserts it.
-
-## 5. Model-facing identity (overlay, no core edit)
-
-The shared base emits a fixed first system-prompt line: `You are an AI agent powered by
-DeepSeek Harness.` (`packages/core/system-prompt/src/index.ts`, gated on the config
-`includeHarnessIdentity`). Editing that string is tempting but it is the first line of every
-`snapshots/**/system-prompt.expected.md` fixture (55+ files), so changing the source turns
-every upstream merge into a snapshot-conflict slog.
-
-Instead the deployment overlay `apps/desktop/resources/vaultai-defaults.patch.yml` overrides
-the `system-prompt` row:
-
-```yaml
-- id: system-prompt
-  config:
-    includeHarnessIdentity: false
-    personaPrefix: 'You are an AI agent powered by VaultAI.'
-```
-
-`includeHarnessIdentity: false` drops the DeepSeek identity section; `personaPrefix` supplies
-the VaultAI line in its place (the section that would sit right after it). The upstream test
-`system-prompt.spec.ts` "can omit the harness identity for a deployment that owns the complete
-persona" pins this exact behavior. Core source and all snapshot fixtures stay untouched, so
-this costs nothing on rebase.
+- `displayName: Northwest Harness`
+- `api: openai-completions`
+- `baseURL: http://vaultai.local/v1`
+- `apiKeyEnv: VAULTAI_API_KEY` (resolved from env, `$DSH_HOME/.credentials.yaml`, or `.env`)
+- `headers: { X-VaultAI-Reasoning: preserve }` — instructs `VaultLM-Dashboard` proxy to preserve upstream `delta.reasoning_content` verbatim instead of flattening into `<think>...</think>` inside `delta.content`, so `@earendil-works/pi-ai` cleanly separates `reasoning` and `text` blocks.
+- `cacheRetention: long` + `compat.supportsLongCacheRetention: true` — enables OpenAI prompt cache affinity (`prompt_cache_key`) against Lemonade Server's KV prefix cache.
+- Registered models (`agent-default-model`: `Qwen3.8-27B-Gufo`):
+  - `Qwen3.8-27B-Gufo` (Primary — vision + reasoning + tools, `off: none`)
+  - `Qwen3.8-27B-GGUF` (Concurrent — vision + reasoning + tools, `off: none`)
+  - `qwen3.6-35b-a3b` (Fast MoE — vision + reasoning + tools, `off: none`)
+  - `gpt-oss-20b` (Ultra-Fast — text + harmony reasoning)
+  - `Qwen3.8-27B-ROCmFP4-STRIX-MTP` (ROCm FP4 — vision + reasoning + tools, `off: none`)
+  - `nvidia-nemotron-3-nano-30b-a3b`
+  - `gpt-oss-120b-mxfp4` (Heavy)
+- Disables `llm-deepseek` and `skill-badge`, and sets `system-prompt.personaPrefix` to `'You are an AI agent powered by Northwest Harness.'`.
+- **Prompt Processing Bar (`: vaultai-progress`) decision:** Not added to `vaultai-defaults.patch.yml` / `llm-pi-ai` because (a) upstream `gufo:rocm` / Lemonade currently serves via `/v1/chat/completions` without per-token prefill progress events from `getSlots()`, and (b) `@earendil-works/pi-ai` uses the `openai` SDK SSE parser which discards SSE comment lines (`:...`). Keeping the native `TurnStatus` indicator avoids intrusive patches inside `node_modules/@earendil-works/pi-ai`.

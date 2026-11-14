@@ -100,7 +100,7 @@ function harness(options: {
         return Promise.resolve(remoteOk(
           options.provider === false || options.providerActive === false
             ? []
-            : [{ id: ONBOARDING_ROUTES[0].provider, name: 'VaultAI' }],
+            : [{ id: ONBOARDING_ROUTES[0].provider, name: 'Northwest Harness' }],
         ))
       },
       listConfigurableProviders: () => Promise.resolve(remoteOk(
@@ -108,7 +108,7 @@ function harness(options: {
           ? []
           : [{
             provider: ONBOARDING_ROUTES[0].provider,
-            displayName: 'VaultAI',
+            displayName: 'Northwest Harness',
             settingsNs: options.providerSettingsNs ?? ONBOARDING_ROUTES[0].settingsNs,
             settingsPath: ['providers', ONBOARDING_ROUTES[0].provider],
           }],
@@ -179,7 +179,7 @@ describe('DeepSeekOnboardingDialog', () => {
     expect(await screen.findByRole('dialog', { name: en.onboardingTitle })).toBeTruthy()
     expect(document.getElementById('root')?.inert).toBe(true)
     // The copy names the offered route, so the placeholder is resolved before render.
-    expect(screen.getByText(en.onboardingDescription.replace('{provider}', 'VaultAI'))).toBeTruthy()
+    expect(screen.getByText(en.onboardingDescription.replace('{provider}', 'Northwest Harness'))).toBeTruthy()
     const key = screen.getByLabelText<HTMLInputElement>(en.keyInput)
     await waitFor(() => { expect(document.activeElement).toBe(key) })
     expect(screen.queryByText(en.customized)).toBeNull()

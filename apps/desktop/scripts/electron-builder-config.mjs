@@ -97,8 +97,8 @@ export function createElectronBuilderConfig(
   return {
     appId,
     extraMetadata: { dshDesktopAppId: appId, dshMandatoryUpdatePolicy: policy, ...resolveReleaseVersionOverride(env) },
-    productName: 'Vaultai-secured-deepseek-harness',
-    artifactName: 'vaultai-secured-deepseek-harness-${version}-${os}-${arch}.${ext}',
+    productName: 'Northwest Harness',
+    artifactName: 'northwest-harness-${version}-${os}-${arch}.${ext}',
     directories: { output: unsigned ? join(buildPaths.root, 'unsigned-artifacts') : buildPaths.artifacts },
     asar: true,
     electronDist: buildPaths.electron,

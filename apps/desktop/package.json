@@ -1,6 +1,6 @@
 {
   "name": "@deepseek-ai/dsh-desktop",
-  "description": "Vaultai secured deepseek harness",
+  "description": "Northwest Harness local AI desktop workspace",
   "version": "0.1.6-alpha.2",
   "private": true,
   "license": "MIT",

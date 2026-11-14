@@ -1,11 +1,11 @@
 {
   "en-US": {
     "menu": [
-      { "label": "About Vaultai-secured-deepseek-harness", "role": "about" },
+      { "label": "About Northwest Harness", "role": "about" },
       { "type": "separator" }
     ],
     "options": {
-      "applicationName": "Vaultai-secured-deepseek-harness",
+      "applicationName": "Northwest Harness",
       "applicationVersion": "1.0.0",
       "version": "",
       "copyright": "",
@@ -14,11 +14,11 @@
   },
   "zh-CN": {
     "menu": [
-      { "label": "关于 Vaultai-secured-deepseek-harness", "role": "about" },
+      { "label": "关于 Northwest Harness", "role": "about" },
       { "type": "separator" }
     ],
     "options": {
-      "applicationName": "Vaultai-secured-deepseek-harness",
+      "applicationName": "Northwest Harness",
       "applicationVersion": "1.0.0",
       "version": "",
       "copyright": "",
