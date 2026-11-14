@@ -7,6 +7,7 @@ import type {
 } from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type { SessionSeq } from '@deepseek-ai/dsh-session/types'
 import type { InboxState } from '@deepseek-ai/dsh-agent/types'
+import type { TurnProgress } from '@deepseek-ai/dsh-llm'
 import { Button, IconChevronDownOutline14, MarkdownDelegateProvider, Modal } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ChatViewSlotProps, OpenFileOptions } from '../contract/slots.ts'
 import type { ChatSnapshot } from '../contract/snapshot.ts'
@@ -165,11 +166,13 @@ function runningTurnStartTime(timeline: ConversationTimelineSnapshot): number | 
   return latest
 }
 
-/** Turn-level model activity label retained across first-token, tool, and streaming phases. */
-function TurnStatus({ startTime, t }: {
+/** Turn-level model activity label and optional prompt-prefill progress bar. */
+function TurnStatus({ startTime, progress, t }: {
   /** The running turn's logged `turn/start` time; null falls back to mount
    *  time when that boundary is outside the window. */
   startTime: number | null
+  /** Live gateway prefill progress when the active step is still prefilling; null otherwise. */
+  progress: TurnProgress | null
   /** The owning view's locale seat. */
   t: ChatViewSlotProps['t']
 }) {
@@ -189,13 +192,35 @@ function TurnStatus({ startTime, t }: {
   // Short turns keep the plain label; the clock only appears once the turn
   // has clearly been running for a while.
   const showClock = elapsedMs >= 15_000
+  const pct = progress === null ? 0 : Math.max(0, Math.min(100, Math.round(progress.pct)))
+  const label = progress === null
+    ? t('chat.deepDiving')
+    : t(progress.cache ? 'chat.processingPromptCached' : 'chat.processingPrompt', {
+      processed: progress.processed.toLocaleString(),
+      total: progress.total.toLocaleString(),
+      pct,
+    })
   return (
-    <div className={css.turnStatus} role="status" aria-live="polite">
-      {t('chat.deepDiving')}
-      {showClock && (
-        <span className={css.turnStatusClock} aria-hidden>
-          {formatRunDuration(elapsedMs, t)}
-        </span>
+    <div className={css.turnStatusContainer}>
+      <div className={css.turnStatus} role="status" aria-live="polite">
+        {label}
+        {showClock && (
+          <span className={css.turnStatusClock} aria-hidden>
+            {formatRunDuration(elapsedMs, t)}
+          </span>
+        )}
+      </div>
+      {progress !== null && (
+        <div
+          className={css.turnProgressTrack}
+          role="progressbar"
+          aria-valuenow={pct}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label={label}
+        >
+          <div className={css.turnProgressFill} style={{ width: `${pct}%` }} />
+        </div>
       )}
     </div>
   )
@@ -238,6 +263,7 @@ export function ChatView({
   // Workspace root off the session list row: path summaries display relative to it.
   const cwd = useSessions(s => s.byId[sessionId]?.cwd)
   const running = useSession(s => s.running)
+  const turnProgress = useSession(s => s.turnProgress ?? null)
   const openState = useSession(s => s.openState)
   const openError = useSession(s => s.openError)
   const hasMore = useSession(s => s.hasMore)
@@ -808,7 +834,7 @@ export function ChatView({
               double-render the same wait. */}
           {/* Turn-level loading signal: rides the whole running turn (first-token
               wait, tool execution, streaming) so it never flickers per step. */}
-          {running && <TurnStatus startTime={runningTurnStart} t={t} />}
+          {running && <TurnStatus startTime={runningTurnStart} progress={turnProgress} t={t} />}
           {pendingSteering.map(item => (
             <PendingSteeringBubble
               key={item.id}

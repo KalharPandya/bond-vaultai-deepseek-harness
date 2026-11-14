@@ -56,11 +56,13 @@ it('rejects an unsupported mandatory-update mode', () => {
 })
 
 it('validates an unsigned build that carries neither a policy service nor an updater feed', () => {
-  expect(() => validateDesktopPackageEnvironment({
-    DSH_DESKTOP_APP_ID: 'com.deepseek.harness',
-    DSH_DESKTOP_AUTO_UPDATE_ENV: 'none',
-    DSH_DESKTOP_MANDATORY_UPDATE_MODE: 'disabled',
-  }, { platform: 'win32', arch: 'x64' }, { unsigned: true })).not.toThrow()
+  expect(() => {
+    validateDesktopPackageEnvironment({
+      DSH_DESKTOP_APP_ID: 'com.deepseek.harness',
+      DSH_DESKTOP_AUTO_UPDATE_ENV: 'none',
+      DSH_DESKTOP_MANDATORY_UPDATE_MODE: 'disabled',
+    }, { platform: 'win32', arch: 'x64' }, { unsigned: true })
+  }).not.toThrow()
 })
 
 it('validates an unsigned build whose self-hosted feed is its only updater configuration', () => {
@@ -69,10 +71,14 @@ it('validates an unsigned build whose self-hosted feed is its only updater confi
     DSH_DESKTOP_AUTO_UPDATE_ENV: 'selfhosted',
     DSH_DESKTOP_MANDATORY_UPDATE_MODE: 'disabled',
   }
-  expect(() => validateDesktopPackageEnvironment(environment, { platform: 'win32', arch: 'x64' }, { unsigned: true }))
+  expect(() => {
+    validateDesktopPackageEnvironment(environment, { platform: 'win32', arch: 'x64' }, { unsigned: true })
+  })
     .toThrow(/DSH_DESKTOP_SELFHOSTED_UPDATE_URL/u)
-  expect(() => validateDesktopPackageEnvironment({
-    ...environment,
-    DSH_DESKTOP_SELFHOSTED_UPDATE_URL: 'https://updates.example.com/harness/win-x64',
-  }, { platform: 'win32', arch: 'x64' }, { unsigned: true })).not.toThrow()
+  expect(() => {
+    validateDesktopPackageEnvironment({
+      ...environment,
+      DSH_DESKTOP_SELFHOSTED_UPDATE_URL: 'https://updates.example.com/harness/win-x64',
+    }, { platform: 'win32', arch: 'x64' }, { unsigned: true })
+  }).not.toThrow()
 })

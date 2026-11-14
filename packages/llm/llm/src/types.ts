@@ -492,4 +492,21 @@ export interface GenerateOptions {
    * generation policy. Ordinary conversation requests leave it unset.
    */
   purpose?: 'compaction' | 'session-title'
+  /**
+   * Transient live prompt-processing progress callback fired during local
+   * gateway prefill before generated chunks begin arriving. Never persisted.
+   */
+  onProgress?: (progress: TurnProgress) => void
+}
+
+/** Transient live prompt-processing progress emitted by a local inference gateway. */
+export interface TurnProgress {
+  /** Number of prompt tokens evaluated or recalled from KV cache so far. */
+  readonly processed: number
+  /** Total prompt tokens to evaluate for the current attempt. */
+  readonly total: number
+  /** Monotonic completion percentage in [0, 100]. */
+  readonly pct: number
+  /** Whether this step reused an existing KV prompt cache prefix. */
+  readonly cache: boolean
 }

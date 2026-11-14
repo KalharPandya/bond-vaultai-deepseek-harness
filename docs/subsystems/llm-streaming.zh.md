@@ -625,6 +625,11 @@ interface GenerateOptions {
    * generation policy. Ordinary conversation requests leave it unset.
    */
   purpose?: 'compaction' | 'session-title'
+  /**
+   * Transient live prompt-processing progress callback fired during local
+   * gateway prefill before generated chunks begin arriving. Never persisted.
+   */
+  onProgress?: (progress: TurnProgress) => void
 }
 ```
 

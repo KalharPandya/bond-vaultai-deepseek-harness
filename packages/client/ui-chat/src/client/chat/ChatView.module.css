@@ -128,11 +128,41 @@
   }
 }
 
+.turnStatusContainer {
+  align-self: flex-start;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: min(360px, 100%);
+}
+
+.turnProgressTrack {
+  width: min(280px, 100%);
+  height: 4px;
+  border-radius: 999px;
+  corner-shape: round;
+  overflow: hidden;
+  background: var(--dsw-alias-fill-tertiary, rgba(128, 128, 128, 0.18));
+}
+
+.turnProgressFill {
+  height: 100%;
+  border-radius: 999px;
+  corner-shape: round;
+  background: var(--dsw-static-deepseek-500, currentColor);
+  transition: width 180ms ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .turnStatus {
     background-position: 0 0;
     background-size: 100% 100%;
     animation: none;
+  }
+
+  .turnProgressFill {
+    transition: none;
   }
 }
 

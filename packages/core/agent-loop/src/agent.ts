@@ -111,6 +111,8 @@ export class ReactLoopAgent implements Agent {
     this.systemPrompt = new SystemPromptProjection(session)
   }
 
+  private activeAttempt: AssistantStreamAttempt | undefined
+
   get status(): AgentStatus {
     return this.phase.kind === 'idle' || this.phase.kind === 'maintenance' ? 'idle' : 'running'
   }
@@ -390,6 +392,7 @@ export class ReactLoopAgent implements Agent {
       try {
         const stream = preparedCall?.stream(request) ?? this.loopCtx.llm.stream(request)
         signal.throwIfAborted()
+        this.activeAttempt = live
         live.start()
         started = true
         for await (const chunk of stream) {
@@ -614,6 +617,7 @@ export class ReactLoopAgent implements Agent {
       ...header.tools !== undefined ? { tools: header.tools } : {},
       sessionId: this.session.id,
       signal,
+      onProgress: (progress: Parameters<AssistantStreamAttempt['progress']>[0]) => { this.activeAttempt?.progress(progress) },
     }))
     return request
   }

@@ -17,4 +17,4 @@ export const WELCOME_NOTICE_VERSION = '2026-08-13.1'
  * the slot keeps the notice, its store, and its tests wired, so upstream changes
  * to any of them still apply cleanly.
  */
-export const WELCOME_NOTICE_ENABLED = false
+export const WELCOME_NOTICE_ENABLED: boolean = false

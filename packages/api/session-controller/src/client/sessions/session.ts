@@ -100,6 +100,7 @@ export class Session implements SessionFace {
   private readonly stopObservingInbox: () => void
   private readonly assistantStream = new ClientAssistantStream()
   private running = false
+  private turnProgress: import('@deepseek-ai/dsh-llm').TurnProgress | null = null
   private address: SubagentAddress | undefined
   private parentAvailable: boolean | undefined
   /**
@@ -503,6 +504,7 @@ export class Session implements SessionFace {
       this.notifier.markDirty()
     }
     if (running) this.firstPromptPendingTurn = false
+    else this.turnProgress = null
     if (this.running === running) return
     this.running = running
     this.notifier.markDirty()
@@ -631,6 +633,10 @@ export class Session implements SessionFace {
         this.publishAssistantEntry(this.assistantStream.acceptDurable(change.entry))
         return
       case 'assistant-stream':
+        if ((change.frame.type === 'start' || change.frame.type === 'end') && this.turnProgress !== null) {
+          this.turnProgress = null
+          this.notifier.markDirty()
+        }
         this.publishAssistantEntry(this.assistantStream.acceptFrame(change.frame))
     }
   }
@@ -648,6 +654,7 @@ export class Session implements SessionFace {
     const visible = this.assistantStream.replace(entries, assistantStream)
     this.baseSeq = SessionLogOffset(entries[0]?.event.seq ?? 0)
     this.hasMore = hasMore
+    this.turnProgress = null
     if (visible.some(entry => entry.event.type === 'turn/start')) this.firstPromptPendingTurn = false
     if (projections !== undefined) this.projections.seed(projections)
     this.eventSource.replace(visible, hasMore)
@@ -656,7 +663,14 @@ export class Session implements SessionFace {
   }
 
   private publishAssistantEntry(result: ClientAssistantStreamResult): void {
+    if (result?.type === 'progress') {
+      this.turnProgress = result.progress
+      this.notifier.markDirty()
+      return
+    }
     if (result?.type === 'rebaseline') {
+      this.turnProgress = null
+      this.notifier.markDirty()
       const events = this.events
       queueMicrotask(() => {
         if (events !== undefined && this.events === events) events.restart()
@@ -664,19 +678,23 @@ export class Session implements SessionFace {
       return
     }
     if (result?.type === 'settlement') {
+      this.turnProgress = null
       this.eventSource.settleAssistant(result.attemptId, result.entry)
       this.observeSubmissionEvent(result.entry.event)
       this.notifier.markDirty()
       return
     }
     if (result?.type === 'abandonment') {
+      this.turnProgress = null
       this.eventSource.settleAssistant(result.attemptId)
       this.notifier.markDirty()
       return
     }
     if (result?.type === 'publish' && this.appendLive(result.entry)) {
+      this.turnProgress = null
       this.notifier.markDirty()
     } else if (result?.type === 'transient') {
+      this.turnProgress = null
       this.eventSource.append(result.entry)
       this.notifier.markDirty()
     }
@@ -804,6 +822,7 @@ export class Session implements SessionFace {
       lastAgentError: this.lastAgentError,
       promptAttempted: this.promptAttempted,
       awaitingFirstTurn: this.firstPromptPendingTurn,
+      turnProgress: this.turnProgress,
     }
   }
 

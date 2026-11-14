@@ -10,6 +10,7 @@ import {
   type ReplayEnvelope,
   type StreamChunk,
   type TokenUsage,
+  type TurnProgress,
 } from '@deepseek-ai/dsh-llm'
 import type { AssistantStreamFrame } from '@deepseek-ai/dsh-agent'
 import type { SessionEventMap, SessionId, SessionSeq } from '@deepseek-ai/dsh-session'
@@ -19,6 +20,7 @@ export class AssistantStreamAttempt {
   private readonly accumulator = new AssistantStreamAccumulator()
   private readonly assembler = new BlockAssembler()
   private index = 0
+  private started = false
   private terminal = false
   /** Attempt identity unique within this Agent lifecycle. */
   readonly attemptId: LlmAttemptId
@@ -47,12 +49,24 @@ export class AssistantStreamAttempt {
 
   /** Publish the opening marker before the first delivered chunk. */
   start(): void {
+    this.started = true
     this.emit({
       type: 'start',
       attemptId: this.attemptId,
       revision: this.nextRevision(),
       turn: this.turn,
       step: this.step,
+    })
+  }
+
+  /** Publish live transient prompt-processing progress during prefill. */
+  progress(progress: TurnProgress): void {
+    if (!this.started || this.terminal) return
+    this.emit({
+      type: 'progress',
+      attemptId: this.attemptId,
+      revision: this.nextRevision(),
+      progress,
     })
   }
 

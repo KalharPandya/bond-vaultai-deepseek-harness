@@ -284,7 +284,7 @@ function wireAssistantStreamFrame(
   durableCursor: SessionSeqCursor,
 ): SessionAssistantStreamFrame {
   if (frame.type === 'start') return { ...frame, startedAfterSeq: durableCursor }
-  if (frame.type === 'end') return frame
+  if (frame.type === 'end' || frame.type === 'progress') return frame
   return {
     ...frame,
     chunk: frame.chunk as JsonValue,

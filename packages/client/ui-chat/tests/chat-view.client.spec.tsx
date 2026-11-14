@@ -2129,7 +2129,7 @@ describe('ChatView', () => {
     const view = render(<h.ChatView {...h.props} />)
     expect(view.getByTestId('tool-seat-r1')).toBeTruthy()
     expect(h.toolOwners[0]?.block).toMatchObject({ callId: 'r1', argsRaw: '{"command":"cmd-r1"}' })
-    expect(view.getByRole('status').textContent).toBe('深度求索中...')
+    expect(view.getByRole('status').textContent).toBe('正在处理...')
   })
 
   it('keeps the Tool renderer mounted when a running call settles into log order', () => {
@@ -2189,7 +2189,7 @@ describe('ChatView', () => {
     const view = render(<h.ChatView {...h.props} />)
     // Freshly mounted (as after a reload) yet already past the 15s gate.
     const status = view.getByRole('status')
-    expect(status.textContent).toMatch(/^深度求索中\.\.\.2分0\d秒$/)
+    expect(status.textContent).toMatch(/^正在处理\.\.\.2分0\d秒$/)
     expect(status.querySelector('[aria-hidden="true"]')).not.toBeNull()
     act(() => {
       h.setSession({ testInbox: { 'next-turn': [], 'next-step': [{
@@ -2199,7 +2199,7 @@ describe('ChatView', () => {
         role: 'user', source: { kind: 'user' },
       }] } })
     })
-    expect(status.textContent).toMatch(/^深度求索中\.\.\.2分0\d秒$/)
+    expect(status.textContent).toMatch(/^正在处理\.\.\.2分0\d秒$/)
   })
 
   it('the running clock reads hours once the turn passes an hour', () => {
@@ -2210,7 +2210,30 @@ describe('ChatView', () => {
       { running: true },
     )
     const view = render(<h.ChatView {...h.props} />)
-    expect(view.getByRole('status').textContent).toMatch(/^深度求索中\.\.\.1小时05分0\d秒$/)
+    expect(view.getByRole('status').textContent).toMatch(/^正在处理\.\.\.1小时05分0\d秒$/)
+  })
+
+  it('renders and clears live prompt-processing progress bar across prefill', () => {
+    const h = makeHarness({}, {
+      running: true,
+      turnProgress: { processed: 4096, total: 16384, pct: 25, cache: false },
+    })
+    const view = render(<h.ChatView {...h.props} />)
+    const bar = view.getByRole('progressbar')
+    expect(bar.getAttribute('aria-valuenow')).toBe('25')
+    expect(view.getByRole('status').textContent).toContain('25%')
+
+    act(() => {
+      h.setSession({ turnProgress: { processed: 14336, total: 16384, pct: 88, cache: true } })
+    })
+    expect(view.getByRole('progressbar').getAttribute('aria-valuenow')).toBe('88')
+    expect(view.getByRole('status').textContent).toContain('缓存')
+
+    act(() => {
+      h.setSession({ turnProgress: null })
+    })
+    expect(view.queryByRole('progressbar')).toBeNull()
+    expect(view.getByRole('status').textContent).toBe('正在处理...')
   })
 
   it('hands each ordered root call to the keyed business-node slot', () => {

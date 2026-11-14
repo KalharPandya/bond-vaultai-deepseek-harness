@@ -6,6 +6,7 @@ import type {
 } from '../../types.ts'
 import { expandAssistantStream } from '@deepseek-ai/dsh-llm/assistant-stream'
 import type { AssistantStreamRecord } from '@deepseek-ai/dsh-llm/assistant-stream'
+import type { TurnProgress } from '@deepseek-ai/dsh-llm'
 import type { LlmAttemptId } from '@deepseek-ai/dsh-llm/brand'
 import type {
   SessionAssistantSettlementEntry,
@@ -32,6 +33,7 @@ export type ClientAssistantStreamResult =
   }
   | { readonly type: 'abandonment'; readonly attemptId: LlmAttemptId }
   | { readonly type: 'transient'; readonly entry: SessionTransientEventEntry }
+  | { readonly type: 'progress'; readonly progress: TurnProgress }
   | { readonly type: 'rebaseline' }
   | undefined
 
@@ -130,6 +132,9 @@ export class ClientAssistantStream {
           nextIndex: 0,
         }
         return undefined
+      case 'progress':
+        if (this.activeAttempt === undefined || this.activeAttempt.attemptId !== frame.attemptId) return undefined
+        return { type: 'progress', progress: frame.progress }
       case 'chunk': {
         const attempt = this.activeAttempt
         // A controller mounted after the Host saw this attempt has no start

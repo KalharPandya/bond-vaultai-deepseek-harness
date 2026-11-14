@@ -1254,6 +1254,12 @@ export interface Config {
    * and registers them the moment a settings section supplies profiles.
    */
   providers?: Record<string, PiAiProviderProfile>
+  /**
+   * Provider ids this deployment ships as first-party routes. They are not
+   * flagged as declared/custom in configuration surfaces even though they are
+   * not in the installed pi-ai catalog. User-added routes remain custom.
+   */
+  firstPartyProviders?: string[]
 }
 
 /** Configuration for one pi-ai provider route; the `providers` dict key IS the route. */

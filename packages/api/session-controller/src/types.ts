@@ -484,6 +484,12 @@ export type SessionAssistantStreamFrame =
     readonly step: number
   }
   | {
+    readonly type: 'progress'
+    readonly attemptId: LlmAttemptId
+    readonly revision: number
+    readonly progress: import('@deepseek-ai/dsh-llm').TurnProgress
+  }
+  | {
     readonly type: 'chunk'
     readonly attemptId: LlmAttemptId
     readonly revision: number

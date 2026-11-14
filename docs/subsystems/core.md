@@ -164,6 +164,14 @@ type AssistantStreamFrame =
     readonly step: number
   }
   | {
+    readonly type: 'progress'
+    readonly attemptId: LlmAttemptId
+    /** Monotone within one attached Agent lifecycle; replacement restarts at 1. */
+    readonly revision: number
+    /** Latest transient prompt-processing progress for this active attempt. */
+    readonly progress: import('@deepseek-ai/dsh-llm').TurnProgress
+  }
+  | {
     readonly type: 'chunk'
     readonly attemptId: LlmAttemptId
     readonly revision: number

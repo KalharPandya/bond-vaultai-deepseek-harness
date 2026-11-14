@@ -53,4 +53,34 @@ describe('SessionAssistantStreamAccumulator', () => {
     }, SessionSeq(9))
     expect(accumulator.snapshot()).toEqual({ revision: 5 })
   })
+
+  it('tracks revision across progress frames without mutating active attempt chunks', () => {
+    const accumulator = new SessionAssistantStreamAccumulator()
+    accumulator.accept({
+      type: 'start', attemptId: LlmAttemptId('prefill'), revision: 1, turn: 1, step: 1,
+    }, SessionSeq(3))
+
+    accumulator.accept({
+      type: 'progress', attemptId: LlmAttemptId('prefill'), revision: 2,
+      progress: { processed: 500, total: 1000, pct: 50, cache: false },
+    }, SessionSeq(3))
+    expect(accumulator.snapshot()).toMatchObject({
+      revision: 2,
+      activeAttempt: {
+        attemptId: 'prefill', startedAfterSeq: 3, nextIndex: 0, stream: [],
+      },
+    })
+
+    accumulator.accept({
+      type: 'chunk', attemptId: LlmAttemptId('prefill'), revision: 3, index: 0,
+      time: 10, chunk: { type: 'text-delta', index: 0, text: 'hello' },
+    }, SessionSeq(3))
+    expect(accumulator.snapshot()).toMatchObject({
+      revision: 3,
+      activeAttempt: {
+        attemptId: 'prefill', nextIndex: 1,
+        stream: [{ type: 'text-chunks', time0: 10, index: 0, dt: [], texts: ['hello'] }],
+      },
+    })
+  })
 })

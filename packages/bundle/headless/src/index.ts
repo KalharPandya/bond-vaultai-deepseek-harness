@@ -128,6 +128,7 @@ function streamReasoning(
       close()
       return
     }
+    if (frame.type === 'progress') return
     const chunk = frame.chunk
     switch (chunk.type) {
       case 'reasoning-delta':

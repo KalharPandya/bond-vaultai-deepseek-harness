@@ -32,6 +32,9 @@ export const remoteDefaultResponses: RemoteTable = {
     'credentials/describe': ok({}),
     // ui-permission-presets `PermissionCatalogDirectory` on its first read for a connection generation.
     'permissionPresets/catalog': ok({ options: [] }),
+    // ui-settings-models `DeepSeekOnboardingDialog` (mounts at boot when WELCOME_NOTICE_ENABLED is false).
+    'llm/listProviders': ok([]),
+    'llm/listConfigurableProviders': ok([]),
   },
   // Stream endpoints the roster opens later than boot; declared so a spec that forgets the script gets a stream miss.
   streams: [

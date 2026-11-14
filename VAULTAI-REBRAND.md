@@ -2,7 +2,7 @@
 
 Purpose: track every user-facing DeepSeek / VaultAI -> **Northwest Harness** white-label change and GMKtec local gateway wiring in this repository (`kalhar/private-windows-build`) so pulling upstream (`deepseek-ai/deepseek-harness`) stays low-conflict.
 
-- Fork base commit: `ddefc45fbc` (upstream release 0.1.6-alpha.2)
+- Fork base release: `0.1.6-alpha.2` (upstream release tag `0.1.6-alpha.2`)
 - Branch: `kalhar/private-windows-build`
 - Guiding rule: white-label only what a user actually sees (product name, logos/wordmarks,
   desktop metadata, default provider config, and model-facing persona). Do NOT rename
@@ -76,4 +76,4 @@ Mounted when `DSH_CLIENT_BUILD_PROFILE === 'official'`:
   - `nvidia-nemotron-3-nano-30b-a3b`
   - `gpt-oss-120b-mxfp4` (Heavy)
 - Disables `llm-deepseek` and `skill-badge`, and sets `system-prompt.personaPrefix` to `'You are an AI agent powered by Northwest Harness.'`.
-- **Prompt Processing Bar (`: vaultai-progress`) decision:** Not added to `vaultai-defaults.patch.yml` / `llm-pi-ai` because (a) upstream `gufo:rocm` / Lemonade currently serves via `/v1/chat/completions` without per-token prefill progress events from `getSlots()`, and (b) `@earendil-works/pi-ai` uses the `openai` SDK SSE parser which discards SSE comment lines (`:...`). Keeping the native `TurnStatus` indicator avoids intrusive patches inside `node_modules/@earendil-works/pi-ai`.
+- **Prompt Processing Bar (`: vaultai-progress`) implemented end-to-end:** `packages/llm/llm-pi-ai/src/progress.ts` (`createProgressFetch`, `parseVaultAiProgressLine`) tees the raw SSE `Response.body` before `@earendil-works/pi-ai`'s SDK parser discards SSE comments, parses `: vaultai-progress {"stage":"prompt_eval","processed":...,"total":...,"percent":...,"cached":...,"elapsed_ms":...}` frames (injected by `VaultLM-Dashboard` + `vaultai.local` `vaultai-slots-relay.service` `:13306` across `gufo:rocm` and `llamacpp:rocm`), and forwards transient `TurnProgress` updates (`Agent` -> `SessionAssistantStream` -> `ChatView` `TurnStatus` progress bar with `chat.deepDiving` localized to `'Processing...'` / `'正在处理...'`, keeping `node_modules/@earendil-works/pi-ai` and persisted `StreamChunk` schemas untouched). Live `PiAiAdapter` E2E against `http://vaultai.local/v1` (`Qwen3.8-27B-Gufo`) verified `14` progress steps (`0%`–`100%`) on a `40,930`-token cold prompt, followed by `38,912` cached tokens (`95%` cache hit) and `16.6x` faster TTFT (`4,673ms` vs `77,792ms`) on warm tool continuation (`lookup_equity`). Also verified offline Word/Office checks (`python-docx` -> `check_office.py --contains` -> `@deepseek-ai/dsh-office-to-pdf` PDF render) and `$HOME/.dsh/.credentials.yaml` (`refs.VAULTAI_API_KEY`).

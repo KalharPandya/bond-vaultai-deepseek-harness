@@ -161,10 +161,9 @@ describe('hand-declared providers', () => {
     expect(shipped.llm.listConfigurableProviders().find(entry => entry.provider === 'acme-gateway')?.declared)
       .toBe(true)
 
-    const firstParty = await harness({
-      ...gateway(`${server.url}/v1`),
-      firstPartyProviders: ['acme-gateway'],
-    })
+    const cfg = gateway(`${server.url}/v1`)
+    cfg.firstPartyProviders = ['acme-gateway']
+    const firstParty = await harness(cfg)
     expect(firstParty.llm.listConfigurableProviders().find(entry => entry.provider === 'acme-gateway')?.declared)
       .toBeFalsy()
   })

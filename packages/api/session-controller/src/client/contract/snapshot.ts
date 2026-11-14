@@ -1,5 +1,6 @@
 /** Session-owned observable state excluding Conversation target data. */
 import type { FileAttachmentRef } from '@deepseek-ai/dsh-attachment'
+import type { TurnProgress } from '@deepseek-ai/dsh-llm'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import type { SubagentAddress } from '@deepseek-ai/dsh-subagent/client'
 import type { RemoteFailure } from '@deepseek-ai/dsh-typert-protocol'
@@ -88,4 +89,6 @@ export interface SessionSnapshot {
   readonly promptAttempted: boolean
   /** The first accepted prompt has not reached a durable `turn/start` event. */
   readonly awaitingFirstTurn: boolean
+  /** Latest transient prompt-processing progress while the active attempt prefills; null/undefined outside prefill. */
+  readonly turnProgress?: TurnProgress | null
 }

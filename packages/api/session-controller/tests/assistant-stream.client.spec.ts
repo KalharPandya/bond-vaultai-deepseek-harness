@@ -208,4 +208,31 @@ describe('ClientAssistantStream', () => {
       kind: 'committed', eventType: 'assistant/attempt', seq: 2,
     }))).toEqual({ type: 'rebaseline' })
   })
+
+  it('emits active attempt progress frames without altering chunk ordering or rebaselining', () => {
+    const stream = opened()
+    expect(stream.acceptFrame({
+      type: 'progress',
+      attemptId: ATTEMPT,
+      revision: 2,
+      progress: { processed: 1200, total: 2400, pct: 50, cache: true },
+    })).toEqual({
+      type: 'progress',
+      progress: { processed: 1200, total: 2400, pct: 50, cache: true },
+    })
+
+    // Next expected chunk index remains 0 (no gap triggered, transient live-chunk emitted)
+    const published = stream.acceptFrame(chunkFrame(0))
+    expect(published?.type).toBe('transient')
+    const second = stream.acceptFrame(chunkFrame(1))
+    expect(second?.type).toBe('transient')
+
+    // Mismatched attempt progress is ignored
+    expect(stream.acceptFrame({
+      type: 'progress',
+      attemptId: LlmAttemptId('other:99'),
+      revision: 4,
+      progress: { processed: 100, total: 100, pct: 100, cache: false },
+    })).toBeUndefined()
+  })
 })

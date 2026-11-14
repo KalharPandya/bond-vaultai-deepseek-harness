@@ -73,6 +73,8 @@ export class SessionAssistantStreamAccumulator {
       case 'end':
         this.activeAttempt = undefined
         break
+      case 'progress':
+        break
     }
     this.dirty = true
   }
